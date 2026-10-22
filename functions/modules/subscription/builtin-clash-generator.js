@@ -8,6 +8,7 @@ import { urlsToClashProxies } from '../../utils/url-to-clash.js';
 import { getUniqueName } from './name-utils.js';
 import { isMetaCore } from './user-agent-utils.js';
 import { DNS_PROXY_GROUP, resolveSafeDnsConfig } from './safe-dns.js';
+import { applyClashHardening } from './clash-hardening.js';
 import {
     POLICY_GROUPS,
     RULE_SETS,
@@ -241,7 +242,14 @@ export function generateBuiltinClashConfig(nodeList, options = {}) {
             rules: clashRules,
         };
 
-        let yamlStr = yaml.dump(config, {
+        // 私网直连与域名还原是内置规则无法取消的不变量，只在生成出口统一加。
+        // Hiddify 的 Clash 解析器只认纯 MATCH，保持既有降级不改。
+        const hardenedConfig = applyClashHardening(config, {
+            enableSniffer: enableMihomoSyntax,
+            enablePrivateRules: !isHiddifyClient,
+        });
+
+        let yamlStr = yaml.dump(hardenedConfig, {
             indent: 2,
             lineWidth: -1,
             noRefs: true,

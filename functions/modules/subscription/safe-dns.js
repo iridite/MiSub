@@ -7,6 +7,9 @@ export const DNS_MODES = Object.freeze({
 
 export const DNS_PROXY_GROUP = '🌐 DNS 出口';
 export const SINGBOX_CN_RULE_SET = 'geosite-cn';
+// 客户端把系统 DNS 指向这个地址，查询才会进内核，从而拿到 fake-ip 并命中域名规则。
+// 只绑回环：allow-lan 为 false，不需要也不应该对局域网暴露。
+export const DEFAULT_DNS_LISTEN = '127.0.0.1:53';
 
 export const DEFAULT_DNS_POLICY = Object.freeze({
     domestic: ['223.5.5.5', '119.29.29.29'],
@@ -154,6 +157,7 @@ function cloneResolverPolicy(policy) {
 
 export const DEFAULT_DNS_CONFIG = {
     enable: true,
+    listen: DEFAULT_DNS_LISTEN,
     ipv6: false,
     'enhanced-mode': 'fake-ip',
     'fake-ip-range': '198.18.0.1/16',
@@ -202,7 +206,10 @@ export function isExplicitDnsBlock(override) {
 export function resolveSafeDnsConfig(raw, options = {}) {
     const rawOverride = parseOverride(raw);
     if (isExplicitDnsBlock(rawOverride)) {
-        return clone(rawOverride);
+        const explicit = clone(rawOverride);
+        // 用户显式 DNS 块原样保留，只补上缺失的监听地址；写 listen: '' 可以主动关掉。
+        if (explicit.listen === undefined) explicit.listen = DEFAULT_DNS_LISTEN;
+        return explicit;
     }
 
     const policy = resolveDnsPolicy(raw, options);

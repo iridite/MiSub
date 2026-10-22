@@ -2,6 +2,7 @@ import yaml from 'js-yaml';
 import { clashFix } from '../../../utils/format-utils.js';
 import { normalizeUnifiedTemplateModel } from '../template-model.js';
 import { DNS_PROXY_GROUP, resolveSafeDnsConfig } from '../safe-dns.js';
+import { applyClashHardening } from '../clash-hardening.js';
 import { applyMihomoChainProxy } from '../mihomo-chain-proxy.js';
 
 function mapGroupType(type) {
@@ -276,7 +277,12 @@ export function renderClashFromTemplateModel(model) {
         },
     };
 
-    let yamlStr = yaml.dump(config, {
+    // 私网直连与域名还原是模板无法取消的不变量，只在生成出口统一加。
+    const hardenedConfig = applyClashHardening(config, {
+        enableSniffer: Boolean(normalizedModel.meta?.isMeta),
+    });
+
+    let yamlStr = yaml.dump(hardenedConfig, {
         indent: 2,
         lineWidth: -1,
         noRefs: true,
