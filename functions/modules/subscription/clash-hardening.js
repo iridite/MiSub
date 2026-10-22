@@ -12,14 +12,14 @@
 export function buildMihomoSnifferConfig() {
     return {
         enable: true,
-        // 客户端直连真实 IP（绕过内核 DNS）时也要嗅探，否则只剩 IP 可供规则匹配。
+        // 客户端拿到污染/真实 IP（绕过内核 DNS）时，嗅探 SNI 并强制覆盖连接目的地。
+        // 不开 override-destination 的话，即使内核识别出域名，发往远端的仍是污染 IP，握手会卡死。
         'parse-pure-ip': true,
-        'override-destination': false,
+        'override-destination': true,
         sniff: {
-            TLS: { ports: [443, 8443] },
-            // HTTP 的目标必须以 Host 为准，否则域名规则和 SNI 校验都会落空。
+            TLS: { ports: [443, 8443], 'override-destination': true },
             HTTP: { ports: [80, 8080], 'override-destination': true },
-            QUIC: { ports: [443] },
+            QUIC: { ports: [443], 'override-destination': true },
         },
     };
 }
