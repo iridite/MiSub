@@ -1,0 +1,93 @@
+name: Deploy MiSub
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Require delivered-config hardening
+        run: |
+          set -euo pipefail
+          test -f functions/modules/subscription/clash-hardening.js
+          grep -q "DEFAULT_DNS_LISTEN" functions/modules/subscription/safe-dns.js
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test
+        run: npm run test:run -- --reporter=dot
+
+      - name: Generate Wrangler config
+        env:
+          ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          KV_NAMESPACE_ID: ${{ vars.MISUB_KV_ID }}
+        run: |
+          set -euo pipefail
+          test -n "$ACCOUNT_ID"
+          test -n "$KV_NAMESPACE_ID"
+          cat > wrangler.jsonc <<EOF
+          {
+            "name": "misub",
+            "pages_build_output_dir": "./dist",
+            "compatibility_date": "2024-04-01",
+            "compatibility_flags": ["nodejs_compat"],
+            "kv_namespaces": [
+              {
+                "binding": "MISUB_KV",
+                "id": "$KV_NAMESPACE_ID"
+              }
+            ],
+            "vars": {
+              "MISUB_PUBLIC_URL": "https://misub.nekorect.eu.org",
+              "CORS_ORIGINS": "https://misub.nekorect.eu.org,https://misub-1dk.pages.dev"
+            }
+          }
+          EOF
+
+      - name: Build
+        run: npm run build
+
+      - name: Deploy to Cloudflare Pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_API_KEY: ${{ secrets.CLOUDFLARE_API_KEY }}
+          CLOUDFLARE_EMAIL: ${{ secrets.CLOUDFLARE_EMAIL }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${CLOUDFLARE_API_TOKEN:-}" ]]; then
+            test -n "${CLOUDFLARE_API_KEY:-}"
+            test -n "${CLOUDFLARE_EMAIL:-}"
+          fi
+          npx wrangler pages deploy dist --project-name misub --branch main --commit-dirty=true
+
+      - name: Smoke-test published Clash and sing-box subscriptions
+        env:
+          MISUB_SMOKE_URL: ${{ secrets.MISUB_SMOKE_URL }}
+        run: |
+          set -euo pipefail
+          if [[ -n "${MISUB_SMOKE_URL:-}" ]]; then
+            node scripts/smoke-subscription.mjs
+          else
+            echo "MISUB_SMOKE_URL not configured, skipping subscription smoke test."
+          fi
