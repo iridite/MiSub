@@ -106,7 +106,7 @@
 
 ## 仍需维护的事项
 
-- `iridite/MiSub#452` 目前是 draft，未合并 upstream。`iridite/misub-deploy` 的定时 workflow 仍从 `imzyb/MiSub@main` 拉取源码，可能在下次运行时把直接部署的修复覆盖掉。正式合并前，每次定时部署后都要重新检查公开输出；更稳妥的长期方案是让 workflow 固定到已审计提交或在合并后再恢复自动发布。
+- `iridite/MiSub#452` 已于 2026-08-22 合并至上游。部署流程已收敛到本仓库的 `.github/workflows/deploy.yml`，直接以本仓库 `main` 分支为源，不再存在独立部署仓库或被上游未经审计代码自动覆盖的问题。
 - 本次主要验收的是链接参数 `clash=3` 的 Clash 输出。sing-box 生成器有独立的 `tun`、`auto_route`、`strict_route` 和 DNS 路径，不能把 Clash 验收结果外推到 sing-box 客户端。
 - 全量测试中的 3 个既有失败仍应单独清理，但它们不是本次 TUN 故障的阻断证据；修复时不要为了“全绿”放宽节点校验或删除安全断言。
 
