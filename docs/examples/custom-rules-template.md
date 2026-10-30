@@ -82,6 +82,12 @@ MATCH,🚀 节点选择
 
 ---
 
+## 内置 Mihomo MRS 分流
+
+MiSub 内置 Clash/Mihomo 规则优先将私有域名与 Apple 全域直连，再使用完整广告 MRS，最后通过 MetaCubeX 的中国域名/IP MRS 直连。`fake-ip` 是 DNS 映射，不执行阻断；curl 返回拒绝时应检查 Mihomo 连接日志中的命中规则和 `REJECT` 策略。自定义 ini 模板不继承这套内置顺序，须自行把所需的 MRS 直连规则放在广告规则前。
+
+MetaCubeX 的 `cn.mrs` 覆盖 `qq.com` 和 `weixinbridge.com`，但它在广告规则之后时不能代替前置的微信直连例外；目前没有在 MetaCubeX 找到独立的 WeChat MRS，且 `wechatpay.cn` 等域名并未由 `cn.mrs` 完整覆盖。因此自定义模板仍需保留这些前置例外，不能仅删除它们。
+
 ## 🔗 链式代理（Mihomo / Meta）
 
 链式代理（前置跳板 → 落地节点）在 Mihomo / Meta 内核上通过**节点级 `dialer-proxy`** 实现，

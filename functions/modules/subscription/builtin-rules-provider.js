@@ -685,6 +685,11 @@ export function translateRuleLine(line, format) {
 
     if (type === 'RULE-SET') {
         const source = REMOTE_SOURCES[value];
+        if (format === 'surge' || format === 'loon' || format === 'quanx') {
+            if (value === 'CN_IP')
+                return format === 'quanx' ? 'GEOIP, CN, DIRECT' : 'GEOIP,CN,DIRECT';
+            if (value === 'CN_DOMAIN' || value === 'PRIVATE') return null;
+        }
         if (!source) return null;
 
         switch (format) {
@@ -694,7 +699,16 @@ export function translateRuleLine(line, format) {
             case 'singbox':
             case 'sing-box':
                 // 返回中间对象，由生成器处理 rule_sets
-                return { type: 'rule_set', tag: value, outbound: target };
+                return {
+                    type: 'rule_set',
+                    tag:
+                        value === 'CN_IP'
+                            ? 'geoip-cn'
+                            : value === 'CN_DOMAIN'
+                              ? SINGBOX_CN_RULE_SET
+                              : value,
+                    outbound: target,
+                };
             case 'surge':
             case 'loon':
                 return `RULE-SET,${source.surge || source.clash},${target}`;

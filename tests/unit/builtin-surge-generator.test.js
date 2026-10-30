@@ -352,7 +352,7 @@ describe('Surge 内置生成器', () => {
             const ss = 'ss://YWVzLTEyOC1nY206cGFzc3dvcmQ=@1.2.3.4:8388#TestSS';
             const result = generateBuiltinSurgeConfig(ss);
             expect(result).toContain(
-                `RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/${PINNED_RULE_REVISIONS.ACL4SSR}/Clash/Apple.list,🍎 Apple`
+                `RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/${PINNED_RULE_REVISIONS.ACL4SSR}/Clash/Apple.list,DIRECT`
             );
             expect(result).toContain(
                 `RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/${PINNED_RULE_REVISIONS.ACL4SSR}/Clash/Netflix.list,🎥 流媒体`
