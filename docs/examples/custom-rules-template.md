@@ -84,9 +84,9 @@ MATCH,🚀 节点选择
 
 ## 内置 Mihomo MRS 分流
 
-MiSub 内置 Clash/Mihomo 规则优先将私有域名与 Apple 全域直连，再使用完整广告 MRS，最后通过 MetaCubeX 的中国域名/IP MRS 直连。`fake-ip` 是 DNS 映射，不执行阻断；curl 返回拒绝时应检查 Mihomo 连接日志中的命中规则和 `REJECT` 策略。自定义 ini 模板不继承这套内置顺序，须自行把所需的 MRS 直连规则放在广告规则前。
+MiSub 内置 Clash/Mihomo 规则优先将私有域名与 Apple 服务直连，再应用广告 MRS，然后依次匹配国内域名、国外域名及国内 IP MRS，最后通过兜底代理。`fake-ip` 只是 DNS 映射，不执行阻断；curl 返回拒绝时应检查 Mihomo 连接日志中的命中规则和 `REJECT` 策略。自定义 ini 模板不继承内置顺序，须自行配置优先级。
 
-MetaCubeX 的 `cn.mrs` 覆盖 `qq.com` 和 `weixinbridge.com`，但它在广告规则之后时不能代替前置的微信直连例外；目前没有在 MetaCubeX 找到独立的 WeChat MRS，且 `wechatpay.cn` 等域名并未由 `cn.mrs` 完整覆盖。因此自定义模板仍需保留这些前置例外，不能仅删除它们。
+桌面自定义模板把 [WeChat MRS](https://github.com/Lanlan13-14/Rules/blob/main/rules/Domain/WeChat.mrs) 放在广告规则之前，取代微信子域名的宽泛手动规则。该集合的 `*.weixin.qq.com` 与 `*.weixinbridge.com` 不匹配根域名，且没有收录 `wechatpay.cn`、`weixin.qq.com.cn`；所以只保留这四项前置手动例外，`snssdk.com` 也不属于微信集合。国外域名走 MetaCubeX `geolocation-!cn.mrs`，排在国内域名集合之后、国内 IP 集合之前，防止国外服务恰好解析到国内 IP 时被误判为直连。
 
 ## 🔗 链式代理（Mihomo / Meta）
 

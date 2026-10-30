@@ -593,6 +593,13 @@ export const REMOTE_SOURCES = {
         clashFormat: 'mrs',
         singbox: `${SING_GEOSITE_BASE}/geosite-cn.srs`,
     },
+    FOREIGN: {
+        name: 'Foreign Domains (GeoSite)',
+        clash: `${METACUBEX_MRS_BASE}/geosite/geolocation-!cn.mrs`,
+        clashBehavior: 'domain',
+        clashFormat: 'mrs',
+        singbox: `${SING_GEOSITE_BASE}/geosite-geolocation-!cn.srs`,
+    },
     CN_IP: {
         name: 'China IP (GeoIP)',
         clash: `${METACUBEX_MRS_BASE}/geoip/cn.mrs`,
@@ -623,6 +630,7 @@ export const RULE_SETS = {
         `DOMAIN-KEYWORD,google,${DEFAULT_SELECT_GROUP}`,
         `DOMAIN-SUFFIX,github.com,${DEFAULT_SELECT_GROUP}`,
         'RULE-SET,CN_DOMAIN,DIRECT',
+        `RULE-SET,FOREIGN,${DEFAULT_SELECT_GROUP}`,
         'RULE-SET,CN_IP,DIRECT',
         `MATCH,${DEFAULT_SELECT_GROUP}`,
     ],
@@ -637,6 +645,7 @@ export const RULE_SETS = {
         `DOMAIN-SUFFIX,google.com,${DEFAULT_SELECT_GROUP}`,
         `DOMAIN-SUFFIX,github.com,${DEFAULT_SELECT_GROUP}`,
         'RULE-SET,CN_DOMAIN,DIRECT',
+        `RULE-SET,FOREIGN,${DEFAULT_SELECT_GROUP}`,
         'RULE-SET,CN_IP,DIRECT',
         `MATCH,${DEFAULT_SELECT_GROUP}`,
     ],
@@ -652,6 +661,7 @@ export const RULE_SETS = {
         `DOMAIN-SUFFIX,google.com,${DEFAULT_SELECT_GROUP}`,
         `DOMAIN-SUFFIX,github.com,${DEFAULT_SELECT_GROUP}`,
         'RULE-SET,CN_DOMAIN,DIRECT',
+        `RULE-SET,FOREIGN,${DEFAULT_SELECT_GROUP}`,
         'RULE-SET,CN_IP,DIRECT',
         `MATCH,${DEFAULT_SELECT_GROUP}`,
     ],
@@ -666,6 +676,7 @@ export const RULE_SETS = {
         `DOMAIN-SUFFIX,google.com,${DEFAULT_RELAY_GROUP}`,
         `DOMAIN-SUFFIX,github.com,${DEFAULT_RELAY_GROUP}`,
         'RULE-SET,CN_DOMAIN,DIRECT',
+        `RULE-SET,FOREIGN,${DEFAULT_RELAY_GROUP}`,
         'RULE-SET,CN_IP,DIRECT',
         `MATCH,${DEFAULT_RELAY_GROUP}`,
     ],
@@ -688,7 +699,7 @@ export function translateRuleLine(line, format) {
         if (format === 'surge' || format === 'loon' || format === 'quanx') {
             if (value === 'CN_IP')
                 return format === 'quanx' ? 'GEOIP, CN, DIRECT' : 'GEOIP,CN,DIRECT';
-            if (value === 'CN_DOMAIN' || value === 'PRIVATE') return null;
+            if (value === 'CN_DOMAIN' || value === 'PRIVATE' || value === 'FOREIGN') return null;
         }
         if (!source) return null;
 

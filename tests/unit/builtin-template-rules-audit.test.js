@@ -186,7 +186,7 @@ describe('Builtin template rule audit', () => {
         expect(providers.ADS.url).not.toContain('raw.githubusercontent.com');
     });
 
-    it('uses MRS for private, Apple, ads, and China routing with direct rules first', () => {
+    it('uses MRS for private, Apple, ads, and China/foreign routing in priority order', () => {
         const rules = getBuiltinRules('FULL', 'clash');
         const providers = getRemoteProviderDefinitions('clash', rules);
 
@@ -207,11 +207,22 @@ describe('Builtin template rule audit', () => {
         });
         expect(providers.CN_DOMAIN).toMatchObject({ behavior: 'domain', format: 'mrs' });
         expect(providers.CN_IP).toMatchObject({ behavior: 'ipcidr', format: 'mrs' });
+        expect(providers.FOREIGN).toMatchObject({
+            behavior: 'domain',
+            format: 'mrs',
+            url: 'https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/geolocation-!cn.mrs',
+        });
         expect(rules.slice(0, 3)).toEqual([
             { type: 'rule-provider', provider: 'PRIVATE', target: 'DIRECT' },
             { type: 'rule-provider', provider: 'APPLE', target: 'DIRECT' },
             { type: 'rule-provider', provider: 'ADS', target: '🎬 视频广告' },
         ]);
+        const cnDomain = rules.findIndex((rule) => rule.provider === 'CN_DOMAIN');
+        const foreign = rules.findIndex((rule) => rule.provider === 'FOREIGN');
+        const cnIp = rules.findIndex((rule) => rule.provider === 'CN_IP');
+        expect(cnDomain).toBeGreaterThan(2);
+        expect(cnDomain).toBeLessThan(foreign);
+        expect(foreign).toBeLessThan(cnIp);
     });
 
     it('emits sing-box ADS rule set as binary SRS in builtin config', () => {
