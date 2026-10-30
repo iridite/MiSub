@@ -213,7 +213,7 @@ describe('Builtin template rule audit', () => {
         expect(providers.CN_IP).toMatchObject({
             behavior: 'ipcidr',
             format: 'mrs',
-            url: 'https://misub.nekorect.eu.org/rules/cn-ip.mrs',
+            url: 'https://misub.nekorect.eu.org/rules/geoip/cn.mrs',
         });
         expect(providers.FOREIGN).toMatchObject({
             behavior: 'domain',

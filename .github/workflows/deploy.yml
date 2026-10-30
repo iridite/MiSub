@@ -69,7 +69,7 @@ jobs:
       - name: Bundle MRS for direct domestic downloads
         run: |
           set -euo pipefail
-          mkdir -p public/rules
+          mkdir -p public/rules/geoip
           meta=https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo
           fetch_rule() {
             curl --fail --location --retry 3 --retry-all-errors --max-time 60 --silent --show-error \
@@ -83,7 +83,7 @@ jobs:
           fetch_rule ads-lite https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockmihomolite.mrs
           fetch_rule cn-domain "$meta/geosite/cn.mrs"
           fetch_rule foreign "$meta/geosite/geolocation-!cn.mrs"
-          fetch_rule cn-ip "$meta/geoip/cn.mrs"
+          fetch_rule geoip/cn "$meta/geoip/cn.mrs"
 
       - name: Build
         run: npm run build

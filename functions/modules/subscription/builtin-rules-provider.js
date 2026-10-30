@@ -600,7 +600,7 @@ export const REMOTE_SOURCES = {
     },
     CN_IP: {
         name: 'China IP (GeoIP)',
-        clash: `${MISUB_MRS_BASE}/cn-ip.mrs`,
+        clash: `${MISUB_MRS_BASE}/geoip/cn.mrs`,
         clashBehavior: 'ipcidr',
         clashFormat: 'mrs',
         singbox: `${SING_GEOIP_BASE}/geoip-cn.srs`,

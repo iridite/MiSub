@@ -836,6 +836,21 @@ custom_proxy_group=🚀 节点选择\`select\`[]DIRECT\`.*
         }
     });
 
+    it('renders self-hosted GeoIP MRS as an ipcidr provider', () => {
+        const rendered = renderClashFromIniTemplate(
+            `[custom]\nruleset=DIRECT,https://misub.nekorect.eu.org/rules/geoip/cn.mrs\nruleset=🐟 漏网之鱼,[]FINAL\ncustom_proxy_group=🚀 节点选择\`select\`[]DIRECT\`.*`,
+            { nodeList: 'trojan://password@1.2.3.4:443#HK-01', targetFormat: 'clash' }
+        );
+        const config = yaml.load(rendered);
+        const provider = Object.values(config['rule-providers'])[0];
+
+        expect(provider).toMatchObject({
+            behavior: 'ipcidr',
+            format: 'mrs',
+            url: 'https://misub.nekorect.eu.org/rules/geoip/cn.mrs',
+        });
+    });
+
     it('keeps ACL4SSR Download list as a text provider because YAML comments out most rules', () => {
         const rendered = renderClashFromIniTemplate(
             `
