@@ -476,6 +476,9 @@ export const PINNED_RULE_REVISIONS = Object.freeze({
 const ACL4SSR_BASE = `https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/${PINNED_RULE_REVISIONS.ACL4SSR}`;
 const SING_GEOSITE_BASE = `https://raw.githubusercontent.com/SagerNet/sing-geosite/${PINNED_RULE_REVISIONS.SING_GEOSITE}`;
 const SING_GEOIP_BASE = `https://raw.githubusercontent.com/SagerNet/sing-geoip/${PINNED_RULE_REVISIONS.SING_GEOIP}`;
+const METACUBEX_MRS_BASE = 'https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo';
+const ADBLOCK_MRS_URL =
+    'https://cdn.jsdelivr.net/gh/217heidai/adblockfilters@main/rules/adblockmihomo.mrs';
 
 /**
  * 将 raw.githubusercontent.com 链接重写为 jsDelivr CDN 镜像。
@@ -535,7 +538,9 @@ export function pinRemoteRuleUrl(sourceUrl, options = {}) {
 export const REMOTE_SOURCES = {
     ADS: {
         name: '广告拦截',
-        clash: `${ACL4SSR_BASE}/Clash/Providers/BanAD.yaml`,
+        clash: ADBLOCK_MRS_URL,
+        clashBehavior: 'domain',
+        clashFormat: 'mrs',
         singbox: `${SING_GEOSITE_BASE}/geosite-category-ads-all.srs`,
         surge: `${ACL4SSR_BASE}/Clash/BanAD.list`,
         quanx: `${ACL4SSR_BASE}/Clash/BanAD.list`,
@@ -554,7 +559,9 @@ export const REMOTE_SOURCES = {
     },
     APPLE: {
         name: '苹果服务',
-        clash: `${ACL4SSR_BASE}/Clash/Providers/Ruleset/Apple.yaml`,
+        clash: `${METACUBEX_MRS_BASE}/geosite/apple.mrs`,
+        clashBehavior: 'domain',
+        clashFormat: 'mrs',
         singbox: `${SING_GEOSITE_BASE}/geosite-apple.srs`,
         surge: `${ACL4SSR_BASE}/Clash/Apple.list`,
     },
@@ -572,6 +579,27 @@ export const REMOTE_SOURCES = {
         surge: `${ACL4SSR_BASE}/Clash/Ruleset/OpenAi.list`,
         quanx: `${ACL4SSR_BASE}/Clash/Ruleset/OpenAi.list`,
     },
+    PRIVATE: {
+        name: 'Private Domains',
+        clash: `${METACUBEX_MRS_BASE}/geosite/private.mrs`,
+        clashBehavior: 'domain',
+        clashFormat: 'mrs',
+        singbox: `${SING_GEOSITE_BASE}/geosite-private.srs`,
+    },
+    CN_DOMAIN: {
+        name: 'China Domains (GeoSite)',
+        clash: `${METACUBEX_MRS_BASE}/geosite/cn.mrs`,
+        clashBehavior: 'domain',
+        clashFormat: 'mrs',
+        singbox: `${SING_GEOSITE_BASE}/geosite-cn.srs`,
+    },
+    CN_IP: {
+        name: 'China IP (GeoIP)',
+        clash: `${METACUBEX_MRS_BASE}/geoip/cn.mrs`,
+        clashBehavior: 'ipcidr',
+        clashFormat: 'mrs',
+        singbox: `${SING_GEOIP_BASE}/geoip-cn.srs`,
+    },
     'geoip-cn': {
         name: 'China IP (GeoIP)',
         singbox: `${SING_GEOIP_BASE}/geoip-cn.srs`,
@@ -587,49 +615,58 @@ export const REMOTE_SOURCES = {
  */
 export const RULE_SETS = {
     BASE: [
+        'RULE-SET,PRIVATE,DIRECT',
+        'RULE-SET,APPLE,DIRECT',
         ...AI_DOMAIN_RULE_LINES,
         'RULE-SET,AI,🤖 智能 AI',
         `DOMAIN-SUFFIX,google.com,${DEFAULT_SELECT_GROUP}`,
         `DOMAIN-KEYWORD,google,${DEFAULT_SELECT_GROUP}`,
         `DOMAIN-SUFFIX,github.com,${DEFAULT_SELECT_GROUP}`,
-        'GEOIP,CN,DIRECT',
+        'RULE-SET,CN_DOMAIN,DIRECT',
+        'RULE-SET,CN_IP,DIRECT',
         `MATCH,${DEFAULT_SELECT_GROUP}`,
     ],
     STD: [
+        'RULE-SET,PRIVATE,DIRECT',
+        'RULE-SET,APPLE,DIRECT',
         'RULE-SET,ADS,🎬 视频广告',
         ...AI_DOMAIN_RULE_LINES,
         'RULE-SET,AI,🤖 智能 AI',
         'RULE-SET,STREAM,🎥 流媒体',
-        'RULE-SET,APPLE,🍎 Apple',
         'RULE-SET,MICROSOFT,Ⓜ️ Microsoft',
         `DOMAIN-SUFFIX,google.com,${DEFAULT_SELECT_GROUP}`,
         `DOMAIN-SUFFIX,github.com,${DEFAULT_SELECT_GROUP}`,
-        'GEOIP,CN,DIRECT',
+        'RULE-SET,CN_DOMAIN,DIRECT',
+        'RULE-SET,CN_IP,DIRECT',
         `MATCH,${DEFAULT_SELECT_GROUP}`,
     ],
     FULL: [
+        'RULE-SET,PRIVATE,DIRECT',
+        'RULE-SET,APPLE,DIRECT',
         'RULE-SET,ADS,🎬 视频广告',
         'RULE-SET,SOCIAL,📲 Telegram',
         ...AI_DOMAIN_RULE_LINES,
         'RULE-SET,AI,🤖 智能 AI',
         'RULE-SET,STREAM,🎥 流媒体',
-        'RULE-SET,APPLE,🍎 Apple',
         'RULE-SET,MICROSOFT,Ⓜ️ Microsoft',
         `DOMAIN-SUFFIX,google.com,${DEFAULT_SELECT_GROUP}`,
         `DOMAIN-SUFFIX,github.com,${DEFAULT_SELECT_GROUP}`,
-        'GEOIP,CN,DIRECT',
+        'RULE-SET,CN_DOMAIN,DIRECT',
+        'RULE-SET,CN_IP,DIRECT',
         `MATCH,${DEFAULT_SELECT_GROUP}`,
     ],
     RELAY: [
+        'RULE-SET,PRIVATE,DIRECT',
+        'RULE-SET,APPLE,DIRECT',
         'RULE-SET,ADS,🎬 视频广告',
         ...AI_DOMAIN_RULE_LINES,
         'RULE-SET,AI,🤖 智能 AI',
         'RULE-SET,STREAM,🎥 流媒体',
-        'RULE-SET,APPLE,🍎 Apple',
         'RULE-SET,MICROSOFT,Ⓜ️ Microsoft',
         `DOMAIN-SUFFIX,google.com,${DEFAULT_RELAY_GROUP}`,
         `DOMAIN-SUFFIX,github.com,${DEFAULT_RELAY_GROUP}`,
-        'GEOIP,CN,DIRECT',
+        'RULE-SET,CN_DOMAIN,DIRECT',
+        'RULE-SET,CN_IP,DIRECT',
         `MATCH,${DEFAULT_RELAY_GROUP}`,
     ],
 };
@@ -724,11 +761,13 @@ export function getRemoteProviderDefinitions(format, ruleLines) {
         if (!source) return;
 
         if (format === 'clash') {
+            const providerFormat = source.clashFormat;
             providers[tag] = {
                 type: 'http',
-                behavior: 'classical',
+                behavior: source.clashBehavior || 'classical',
+                ...(providerFormat ? { format: providerFormat } : {}),
                 url: pinRemoteRuleUrl(source.clash),
-                path: `./ruleset/${tag}.yaml`,
+                path: `./ruleset/${tag}.${providerFormat === 'mrs' ? 'mrs' : 'yaml'}`,
                 interval: 86400,
             };
         } else if (format === 'singbox' || format === 'sing-box') {

@@ -186,6 +186,34 @@ describe('Builtin template rule audit', () => {
         expect(providers.ADS.url).not.toContain('raw.githubusercontent.com');
     });
 
+    it('uses MRS for private, Apple, ads, and China routing with direct rules first', () => {
+        const rules = getBuiltinRules('FULL', 'clash');
+        const providers = getRemoteProviderDefinitions('clash', rules);
+
+        expect(providers.PRIVATE).toMatchObject({
+            behavior: 'domain',
+            format: 'mrs',
+            url: 'https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/private.mrs',
+        });
+        expect(providers.APPLE).toMatchObject({
+            behavior: 'domain',
+            format: 'mrs',
+            url: 'https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/apple.mrs',
+        });
+        expect(providers.ADS).toMatchObject({
+            behavior: 'domain',
+            format: 'mrs',
+            url: 'https://cdn.jsdelivr.net/gh/217heidai/adblockfilters@main/rules/adblockmihomo.mrs',
+        });
+        expect(providers.CN_DOMAIN).toMatchObject({ behavior: 'domain', format: 'mrs' });
+        expect(providers.CN_IP).toMatchObject({ behavior: 'ipcidr', format: 'mrs' });
+        expect(rules.slice(0, 3)).toEqual([
+            { type: 'rule-provider', provider: 'PRIVATE', target: 'DIRECT' },
+            { type: 'rule-provider', provider: 'APPLE', target: 'DIRECT' },
+            { type: 'rule-provider', provider: 'ADS', target: '🎬 视频广告' },
+        ]);
+    });
+
     it('emits sing-box ADS rule set as binary SRS in builtin config', () => {
         const parsed = JSON.parse(
             generateBuiltinSingboxConfig('ss://YWVzLTEyOC1nY206cGFzcw@example.com:8388#HKNode', {
