@@ -5,6 +5,8 @@ on:
     branches:
       - main
   workflow_dispatch:
+  schedule:
+    - cron: '17 4 * * *'
 
 permissions:
   contents: read
@@ -63,6 +65,24 @@ jobs:
             }
           }
           EOF
+
+      - name: Bundle MRS for direct domestic downloads
+        run: |
+          set -euo pipefail
+          mkdir -p public/rules
+          meta=https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo
+          fetch_rule() {
+            curl --fail --location --retry 3 --retry-all-errors --max-time 60 --silent --show-error \
+              --output "public/rules/$1.mrs" "$2"
+            test -s "public/rules/$1.mrs"
+          }
+          fetch_rule private "$meta/geosite/private.mrs"
+          fetch_rule apple "$meta/geosite/apple.mrs"
+          fetch_rule wechat https://raw.githubusercontent.com/Lanlan13-14/Rules/main/rules/Domain/WeChat.mrs
+          fetch_rule ads https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockmihomo.mrs
+          fetch_rule cn-domain "$meta/geosite/cn.mrs"
+          fetch_rule foreign "$meta/geosite/geolocation-!cn.mrs"
+          fetch_rule cn-ip "$meta/geoip/cn.mrs"
 
       - name: Build
         run: npm run build
