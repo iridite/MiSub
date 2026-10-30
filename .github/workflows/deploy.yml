@@ -80,6 +80,7 @@ jobs:
           fetch_rule apple "$meta/geosite/apple.mrs"
           fetch_rule wechat https://raw.githubusercontent.com/Lanlan13-14/Rules/main/rules/Domain/WeChat.mrs
           fetch_rule ads https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockmihomo.mrs
+          fetch_rule ads-lite https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockmihomolite.mrs
           fetch_rule cn-domain "$meta/geosite/cn.mrs"
           fetch_rule foreign "$meta/geosite/geolocation-!cn.mrs"
           fetch_rule cn-ip "$meta/geoip/cn.mrs"

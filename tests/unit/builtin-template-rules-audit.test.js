@@ -193,24 +193,32 @@ describe('Builtin template rule audit', () => {
         expect(providers.PRIVATE).toMatchObject({
             behavior: 'domain',
             format: 'mrs',
-            url: 'https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/private.mrs',
+            url: 'https://misub.nekorect.eu.org/rules/private.mrs',
         });
         expect(providers.APPLE).toMatchObject({
             behavior: 'domain',
             format: 'mrs',
-            url: 'https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/apple.mrs',
+            url: 'https://misub.nekorect.eu.org/rules/apple.mrs',
         });
         expect(providers.ADS).toMatchObject({
             behavior: 'domain',
             format: 'mrs',
-            url: 'https://cdn.jsdelivr.net/gh/217heidai/adblockfilters@main/rules/adblockmihomo.mrs',
+            url: 'https://misub.nekorect.eu.org/rules/ads.mrs',
         });
-        expect(providers.CN_DOMAIN).toMatchObject({ behavior: 'domain', format: 'mrs' });
-        expect(providers.CN_IP).toMatchObject({ behavior: 'ipcidr', format: 'mrs' });
+        expect(providers.CN_DOMAIN).toMatchObject({
+            behavior: 'domain',
+            format: 'mrs',
+            url: 'https://misub.nekorect.eu.org/rules/cn-domain.mrs',
+        });
+        expect(providers.CN_IP).toMatchObject({
+            behavior: 'ipcidr',
+            format: 'mrs',
+            url: 'https://misub.nekorect.eu.org/rules/cn-ip.mrs',
+        });
         expect(providers.FOREIGN).toMatchObject({
             behavior: 'domain',
             format: 'mrs',
-            url: 'https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/geolocation-!cn.mrs',
+            url: 'https://misub.nekorect.eu.org/rules/foreign.mrs',
         });
         expect(rules.slice(0, 3)).toEqual([
             { type: 'rule-provider', provider: 'PRIVATE', target: 'DIRECT' },

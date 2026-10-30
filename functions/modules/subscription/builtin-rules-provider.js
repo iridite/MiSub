@@ -476,9 +476,7 @@ export const PINNED_RULE_REVISIONS = Object.freeze({
 const ACL4SSR_BASE = `https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/${PINNED_RULE_REVISIONS.ACL4SSR}`;
 const SING_GEOSITE_BASE = `https://raw.githubusercontent.com/SagerNet/sing-geosite/${PINNED_RULE_REVISIONS.SING_GEOSITE}`;
 const SING_GEOIP_BASE = `https://raw.githubusercontent.com/SagerNet/sing-geoip/${PINNED_RULE_REVISIONS.SING_GEOIP}`;
-const METACUBEX_MRS_BASE = 'https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo';
-const ADBLOCK_MRS_URL =
-    'https://cdn.jsdelivr.net/gh/217heidai/adblockfilters@main/rules/adblockmihomo.mrs';
+const MISUB_MRS_BASE = 'https://misub.nekorect.eu.org/rules';
 
 /**
  * 将 raw.githubusercontent.com 链接重写为 jsDelivr CDN 镜像。
@@ -538,7 +536,7 @@ export function pinRemoteRuleUrl(sourceUrl, options = {}) {
 export const REMOTE_SOURCES = {
     ADS: {
         name: '广告拦截',
-        clash: ADBLOCK_MRS_URL,
+        clash: `${MISUB_MRS_BASE}/ads.mrs`,
         clashBehavior: 'domain',
         clashFormat: 'mrs',
         singbox: `${SING_GEOSITE_BASE}/geosite-category-ads-all.srs`,
@@ -559,7 +557,7 @@ export const REMOTE_SOURCES = {
     },
     APPLE: {
         name: '苹果服务',
-        clash: `${METACUBEX_MRS_BASE}/geosite/apple.mrs`,
+        clash: `${MISUB_MRS_BASE}/apple.mrs`,
         clashBehavior: 'domain',
         clashFormat: 'mrs',
         singbox: `${SING_GEOSITE_BASE}/geosite-apple.srs`,
@@ -581,28 +579,28 @@ export const REMOTE_SOURCES = {
     },
     PRIVATE: {
         name: 'Private Domains',
-        clash: `${METACUBEX_MRS_BASE}/geosite/private.mrs`,
+        clash: `${MISUB_MRS_BASE}/private.mrs`,
         clashBehavior: 'domain',
         clashFormat: 'mrs',
         singbox: `${SING_GEOSITE_BASE}/geosite-private.srs`,
     },
     CN_DOMAIN: {
         name: 'China Domains (GeoSite)',
-        clash: `${METACUBEX_MRS_BASE}/geosite/cn.mrs`,
+        clash: `${MISUB_MRS_BASE}/cn-domain.mrs`,
         clashBehavior: 'domain',
         clashFormat: 'mrs',
         singbox: `${SING_GEOSITE_BASE}/geosite-cn.srs`,
     },
     FOREIGN: {
         name: 'Foreign Domains (GeoSite)',
-        clash: `${METACUBEX_MRS_BASE}/geosite/geolocation-!cn.mrs`,
+        clash: `${MISUB_MRS_BASE}/foreign.mrs`,
         clashBehavior: 'domain',
         clashFormat: 'mrs',
         singbox: `${SING_GEOSITE_BASE}/geosite-geolocation-!cn.srs`,
     },
     CN_IP: {
         name: 'China IP (GeoIP)',
-        clash: `${METACUBEX_MRS_BASE}/geoip/cn.mrs`,
+        clash: `${MISUB_MRS_BASE}/cn-ip.mrs`,
         clashBehavior: 'ipcidr',
         clashFormat: 'mrs',
         singbox: `${SING_GEOIP_BASE}/geoip-cn.srs`,
