@@ -476,7 +476,7 @@ export const PINNED_RULE_REVISIONS = Object.freeze({
 const ACL4SSR_BASE = `https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/${PINNED_RULE_REVISIONS.ACL4SSR}`;
 const SING_GEOSITE_BASE = `https://raw.githubusercontent.com/SagerNet/sing-geosite/${PINNED_RULE_REVISIONS.SING_GEOSITE}`;
 const SING_GEOIP_BASE = `https://raw.githubusercontent.com/SagerNet/sing-geoip/${PINNED_RULE_REVISIONS.SING_GEOIP}`;
-const MISUB_MRS_BASE = 'https://misub.nekorect.eu.org/rules';
+export const MISUB_MRS_BASE = 'https://misub.nekorect.eu.org/rules';
 
 /**
  * 将 raw.githubusercontent.com 链接重写为 jsDelivr CDN 镜像。
@@ -789,6 +789,7 @@ export function getRemoteProviderDefinitions(format, ruleLines) {
                 type: 'http',
                 behavior: source.clashBehavior || 'classical',
                 ...(providerFormat ? { format: providerFormat } : {}),
+                ...(providerFormat === 'mrs' ? { proxy: 'DIRECT' } : {}),
                 url: pinRemoteRuleUrl(source.clash),
                 path: `./ruleset/${tag}.${providerFormat === 'mrs' ? 'mrs' : 'yaml'}`,
                 interval: 86400,

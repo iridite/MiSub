@@ -191,6 +191,7 @@ describe('Builtin template rule audit', () => {
         const providers = getRemoteProviderDefinitions('clash', rules);
 
         expect(providers.PRIVATE).toMatchObject({
+            proxy: 'DIRECT',
             behavior: 'domain',
             format: 'mrs',
             url: 'https://misub.nekorect.eu.org/rules/private.mrs',

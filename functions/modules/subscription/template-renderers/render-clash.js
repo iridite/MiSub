@@ -4,6 +4,7 @@ import { normalizeUnifiedTemplateModel } from '../template-model.js';
 import { DNS_PROXY_GROUP, resolveSafeDnsConfig } from '../safe-dns.js';
 import { applyClashHardening } from '../clash-hardening.js';
 import { applyMihomoChainProxy } from '../mihomo-chain-proxy.js';
+import { MISUB_MRS_BASE } from '../builtin-rules-provider.js';
 
 function mapGroupType(type) {
     const normalized = String(type || '')
@@ -222,6 +223,7 @@ export function renderClashFromTemplateModel(model) {
             behavior: getRuleProviderBehavior(providerUrl),
             url: providerUrl,
             path: `./ruleset/${providerName}.${usesTextList ? 'list' : usesMrs ? 'mrs' : 'yaml'}`,
+            ...(providerUrl.startsWith(`${MISUB_MRS_BASE}/`) ? { proxy: 'DIRECT' } : {}),
             interval: 86400,
             ...(usesTextList ? { format: 'text' } : {}),
             ...(usesMrs ? { format: 'mrs' } : {}),

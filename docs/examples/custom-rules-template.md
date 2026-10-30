@@ -88,7 +88,7 @@ MiSub 内置 Clash/Mihomo 规则优先将私有域名与 Apple 服务直连，�
 
 桌面自定义模板把 [WeChat MRS](https://github.com/Lanlan13-14/Rules/blob/main/rules/Domain/WeChat.mrs) 放在广告规则之前，取代微信子域名的宽泛手动规则。该集合的 `*.weixin.qq.com` 与 `*.weixinbridge.com` 不匹配根域名，且没有收录 `wechatpay.cn`、`weixin.qq.com.cn`；所以只保留这四项前置手动例外，`snssdk.com` 也不属于微信集合。国外域名走 MetaCubeX `geolocation-!cn.mrs`，排在国内域名集合之后、国内 IP 集合之前，防止国外服务恰好解析到国内 IP 时被误判为直连。
 
-客户端从 `https://misub.nekorect.eu.org/rules/` 下载构建时打包的 MRS 静态文件，不必连接 GitHub 或 jsDelivr；GitHub Actions 每天更新并部署这些文件。若上游下载失败，本次部署会失败，前一次已发布的文件仍可使用；MiSub 域名本身仍需在客户端网络可访问。
+客户端从 `https://misub.nekorect.eu.org/rules/` 下载构建时打包的 MRS 静态文件，provider 固定使用 `DIRECT`，不依赖代理节点，也不必连接 GitHub 或 jsDelivr；GitHub Actions 每天更新并部署这些文件。若上游下载失败，本次部署会失败，前一次已发布的文件仍可使用；MiSub 域名本身仍需在客户端网络可访问。GeoIP 文件保留 `/geoip/` 路径，以便生成器正确识别 `ipcidr` 行为。
 
 ## 🔗 链式代理（Mihomo / Meta）
 

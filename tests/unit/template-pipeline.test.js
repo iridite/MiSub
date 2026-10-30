@@ -845,6 +845,7 @@ custom_proxy_group=🚀 节点选择\`select\`[]DIRECT\`.*
         const provider = Object.values(config['rule-providers'])[0];
 
         expect(provider).toMatchObject({
+            proxy: 'DIRECT',
             behavior: 'ipcidr',
             format: 'mrs',
             url: 'https://misub.nekorect.eu.org/rules/geoip/cn.mrs',
