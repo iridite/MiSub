@@ -190,7 +190,7 @@ export function renderClashFromTemplateModel(model) {
 
     const ruleProviders = {};
     const ruleProviderMap = new Map();
-    let providerCounter = 0;
+    const providerNameCounts = new Map();
 
     normalizedModel.rules.forEach((rule) => {
         const type = String(rule.type || '').toUpperCase();
@@ -200,8 +200,10 @@ export function renderClashFromTemplateModel(model) {
         if (ruleProviderMap.has(providerUrl)) return;
 
         let nameHint = 'rs';
+        let isGeoIp = false;
         try {
             const urlPath = new URL(providerUrl).pathname;
+            isGeoIp = /\/geoip\//i.test(urlPath);
             const fileName =
                 urlPath
                     .split('/')
@@ -214,7 +216,12 @@ export function renderClashFromTemplateModel(model) {
             // ignore invalid provider url shapes and keep fallback name
         }
 
-        const providerName = `${nameHint}_${providerCounter++}`;
+        // 规则集名字直接取来源文件名，读起来就是它管什么；geoip/ 下的集合补 _ip，与同名的域名集合
+        // 区分（cn-domain 与 geoip/cn）。只有真的重名时才追加序号，避免 private_0 这种噪声。
+        const baseName = isGeoIp ? `${nameHint}_ip` : nameHint;
+        const nameUseCount = providerNameCounts.get(baseName) || 0;
+        providerNameCounts.set(baseName, nameUseCount + 1);
+        const providerName = nameUseCount === 0 ? baseName : `${baseName}_${nameUseCount + 1}`;
         ruleProviderMap.set(providerUrl, providerName);
         const usesTextList = /\.(list|txt)$/i.test(providerUrl);
         const usesMrs = isMrsProviderUrl(providerUrl);

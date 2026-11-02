@@ -50,6 +50,20 @@ export function validateClashConfig(config, mode) {
     if (mode === 'clean') assert(array(dns.fallback).length === 0, 'Clash clean mode has fallback DNS');
     assert(array(dns['nameserver-policy']?.['geosite:cn']).length > 0, 'Clash geosite:cn DNS policy is missing');
 
+    // 结构不变量：网段类规则集中排在最前，不夹在规则集之间；MATCH 永远在最后。
+    const rules = array(config.rules).map(rule => String(rule));
+    assert(rules.length > 0, 'Clash rules are missing');
+    const firstRuleSetIndex = rules.findIndex(rule => /^RULE-SET,/i.test(rule));
+    const cidrRulePattern = /^(?:IP-CIDR6?|SRC-IP-CIDR|IP-ASN|GEOIP),/i;
+    const misplacedCidr = rules.findIndex(
+        (rule, index) => cidrRulePattern.test(rule) && firstRuleSetIndex !== -1 && index > firstRuleSetIndex
+    );
+    assert(
+        misplacedCidr === -1,
+        `Clash IP/CIDR rules must be grouped before the rule sets (offenders after index ${firstRuleSetIndex})`
+    );
+    assert(/^MATCH,/i.test(rules[rules.length - 1]), 'Clash last rule must be MATCH');
+
     assertNoLoopbackNodes(config.proxies, 'Clash');
     const aiGroups = array(config['proxy-groups']).filter(group => String(group?.name || '').startsWith('🤖'));
     assert(aiGroups.length > 0, 'Clash AI groups are missing');

@@ -790,15 +790,15 @@ custom_proxy_group=🚀 节点选择\`select\`[]DIRECT\`.*
         expect(localAreaProvider).toMatchObject({
             behavior: 'classical',
             format: 'text',
-            path: './ruleset/localareanetwork_0.list',
+            path: './ruleset/localareanetwork.list',
         });
         expect(banAdProvider).toMatchObject({
             behavior: 'classical',
             format: 'text',
-            path: './ruleset/banad_1.list',
+            path: './ruleset/banad.list',
         });
-        expect(parsed.rules).toContain('RULE-SET,localareanetwork_0,🎯 全球直连');
-        expect(parsed.rules).toContain('RULE-SET,banad_1,🛑 广告拦截');
+        expect(parsed.rules).toContain('RULE-SET,localareanetwork,🎯 全球直连');
+        expect(parsed.rules).toContain('RULE-SET,banad,🛑 广告拦截');
     });
 
     it('maps ACL4SSR root IP lists to matching ipcidr provider YAML files', () => {
@@ -884,9 +884,9 @@ custom_proxy_group=📥 下载服务\`select\`[]🚀 节点选择\`[]DIRECT
         expect(downloadProvider).toMatchObject({
             behavior: 'classical',
             format: 'text',
-            path: './ruleset/download_0.list',
+            path: './ruleset/download.list',
         });
-        expect(parsed.rules).toContain('RULE-SET,download_0,📥 下载服务');
+        expect(parsed.rules).toContain('RULE-SET,download,📥 下载服务');
     });
 
     it('keeps non-ACL4SSR raw GitHub rule URLs unchanged', () => {
@@ -923,8 +923,8 @@ custom_proxy_group=🚀 节点选择\`select\`[]DIRECT\`.*
         );
         expect(Object.values(parsed['rule-providers'] || {})).toEqual(
             expect.arrayContaining([
-                expect.objectContaining({ format: 'text', path: './ruleset/apple_0.list' }),
-                expect.objectContaining({ format: 'text', path: './ruleset/microsoft_1.list' }),
+                expect.objectContaining({ format: 'text', path: './ruleset/apple.list' }),
+                expect.objectContaining({ format: 'text', path: './ruleset/microsoft.list' }),
             ])
         );
     });
@@ -947,14 +947,14 @@ custom_proxy_group=🤖 AI 服务\`select\`[]🚀 节点选择\`[]DIRECT
         const parsed = yaml.load(rendered);
         const providers = parsed['rule-providers'] || {};
 
-        expect(Object.keys(providers)).toContain('ai_0');
-        expect(Object.keys(providers)).not.toContain('rs_0');
-        expect(providers.ai_0).toMatchObject({
+        expect(Object.keys(providers)).toContain('ai');
+        expect(Object.keys(providers)).not.toContain('rs');
+        expect(providers.ai).toMatchObject({
             behavior: 'classical',
             format: 'text',
             url: 'https://rules.example.test/AI.list',
-            path: './ruleset/ai_0.list',
+            path: './ruleset/ai.list',
         });
-        expect(parsed.rules).toContain('RULE-SET,ai_0,🤖 AI 服务');
+        expect(parsed.rules).toContain('RULE-SET,ai,🤖 AI 服务');
     });
 });
