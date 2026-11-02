@@ -17,7 +17,10 @@ export function buildMihomoSnifferConfig() {
         'parse-pure-ip': true,
         'override-destination': true,
         sniff: {
-            TLS: { ports: [443, 8443], 'override-destination': true },
+            // 邮件客户端（Apple Mail / 第三方）直接连 IMAPS/SMTPS 的隐式 TLS 端口，
+            // 客户端自己的解析器给出的是真实 IP，不嗅探这些端口就还原不出域名，
+            // 规则集只能按 IP 命中，最终一律落到 MATCH 兜底（表现为 SSL/TLS 握手被掐断）。
+            TLS: { ports: [443, 8443, 993, 995, 465], 'override-destination': true },
             HTTP: { ports: [80, 8080], 'override-destination': true },
             QUIC: { ports: [443], 'override-destination': true },
         },

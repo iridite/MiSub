@@ -65,6 +65,8 @@ describe('clash hardening invariants', () => {
         const sniffer = applyClashHardening({}, { enableSniffer: true }).sniffer;
         expect(sniffer.enable).toBe(true);
         expect(sniffer.sniff.TLS.ports).toContain(443);
+        // 邮件隐式 TLS 端口必须在嗅探列表里，否则 IMAPS/SMTPS 连接还原不出域名，只能落 MATCH
+        expect(sniffer.sniff.TLS.ports).toEqual(expect.arrayContaining([993, 995, 465]));
         expect(sniffer.sniff.HTTP['override-destination']).toBe(true);
         expect(buildMihomoSnifferConfig()).not.toBe(buildMihomoSnifferConfig());
     });
