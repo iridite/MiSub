@@ -12,7 +12,16 @@ export const SINGBOX_CN_RULE_SET = 'geosite-cn';
 export const DEFAULT_DNS_LISTEN = '127.0.0.1:53';
 
 export const DEFAULT_DNS_POLICY = Object.freeze({
+    // 明文 UDP 只用于 bootstrap（default-nameserver）和局域网私有域。
     domestic: ['223.5.5.5', '119.29.29.29'],
+    // 国内域名与直连出站一律用加密 DoH：明文 UDP:53 在部分网络（酒店/公司/被劫持的宽带）
+    // 会被链路丢弃，表现为国内域名解析超时、直连站点打不开；DoH 用 IP 直连，无需额外 bootstrap，
+    // 多运营商并发，取最快响应。
+    domesticEncrypted: [
+        'https://223.5.5.5/dns-query',
+        'https://223.6.6.6/dns-query',
+        'https://120.53.53.53/dns-query',
+    ],
     foreign: ['udp://8.8.8.8:53', 'udp://1.1.1.1:53'],
     polluted: ['https://8.8.8.8/dns-query', 'https://1.1.1.1/dns-query'],
 });
@@ -129,6 +138,12 @@ export function resolveDnsPolicy(raw, options = {}) {
                 input['default-nameserver'],
             DEFAULT_DNS_POLICY.domestic
         ),
+        domesticEncrypted: resolverList(
+            input.domesticEncrypted ||
+                input.domesticEncryptedNameservers ||
+                input['domestic-encrypted-nameserver'],
+            DEFAULT_DNS_POLICY.domesticEncrypted
+        ),
         foreign: plainForeign.length > 0 ? plainForeign : [...DEFAULT_DNS_POLICY.foreign],
         polluted: resolverList(
             input.polluted ||
@@ -150,6 +165,7 @@ function cloneResolverPolicy(policy) {
     return {
         mode: policy.mode,
         domestic: [...policy.domestic],
+        domesticEncrypted: [...policy.domesticEncrypted],
         foreign: [...policy.foreign],
         polluted: [...policy.polluted],
     };
@@ -177,13 +193,16 @@ export const DEFAULT_DNS_CONFIG = {
     nameserver: DEFAULT_DNS_POLICY.foreign.map((value) => withProxy(value, DNS_PROXY_GROUP)),
     'nameserver-policy': {
         'geosite:private': [...DEFAULT_DNS_POLICY.domestic],
-        'geosite:cn': [...DEFAULT_DNS_POLICY.domestic],
+        'geosite:cn': [...DEFAULT_DNS_POLICY.domesticEncrypted],
         'geosite:geolocation-!cn': DEFAULT_DNS_POLICY.foreign.map((value) =>
             withProxy(value, DNS_PROXY_GROUP)
         ),
     },
-    'proxy-server-nameserver': [...DEFAULT_DNS_POLICY.domestic],
-    'direct-nameserver': [...DEFAULT_DNS_POLICY.domestic],
+    'proxy-server-nameserver': [
+        ...DEFAULT_DNS_POLICY.domestic,
+        ...DEFAULT_DNS_POLICY.domesticEncrypted,
+    ],
+    'direct-nameserver': [...DEFAULT_DNS_POLICY.domesticEncrypted],
     'direct-nameserver-follow-policy': true,
     fallback: [],
     'fallback-filter': {
@@ -221,7 +240,7 @@ export function resolveSafeDnsConfig(raw, options = {}) {
     dns.nameserver = foreign.map((value) => withProxy(value, proxyGroup));
     dns['nameserver-policy'] = {
         'geosite:private': [...policy.domestic],
-        'geosite:cn': [...policy.domestic],
+        'geosite:cn': [...policy.domesticEncrypted],
         ...options.subscriptionDnsPolicies?.reduce((acc, item) => {
             if (item && item.policy && isObject(item.policy)) {
                 Object.assign(acc, item.policy);
@@ -232,8 +251,8 @@ export function resolveSafeDnsConfig(raw, options = {}) {
         }, {}),
         'geosite:geolocation-!cn': foreign.map((value) => withProxy(value, proxyGroup)),
     };
-    dns['proxy-server-nameserver'] = [...policy.domestic];
-    dns['direct-nameserver'] = [...policy.domestic];
+    dns['proxy-server-nameserver'] = [...policy.domestic, ...policy.domesticEncrypted];
+    dns['direct-nameserver'] = [...policy.domesticEncrypted];
     dns.fallback =
         policy.mode === DNS_MODES.POLLUTED
             ? foreign.map((value) => withProxy(value, proxyGroup))
@@ -288,7 +307,7 @@ export function buildSingboxDnsConfig(raw, options = {}) {
     const policy = resolveDnsPolicy(raw, options);
     const proxyGroup = String(options.proxyGroup || DNS_PROXY_GROUP);
     const foreign = policy.mode === DNS_MODES.POLLUTED ? policy.polluted : policy.foreign;
-    const domesticServers = policy.domestic.map((value, index) =>
+    const domesticServers = policy.domesticEncrypted.map((value, index) =>
         parseSingboxResolver(value, `dns-cn-${index + 1}`, 'DIRECT')
     );
     const foreignServers = foreign.map((value, index) =>

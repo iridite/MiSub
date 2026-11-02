@@ -95,7 +95,12 @@ describe('Built-in Sing-box generator', () => {
 
         expect(parsed.dns.servers).toEqual(
             expect.arrayContaining([
-                expect.objectContaining({ type: 'udp', server: '223.5.5.5', server_port: 53 }),
+                expect.objectContaining({
+                    type: 'https',
+                    server: '223.5.5.5',
+                    server_port: 443,
+                    detour: 'DIRECT',
+                }),
                 expect.objectContaining({ type: 'udp', server: '8.8.8.8', detour: '🌐 DNS 出口' }),
             ])
         );

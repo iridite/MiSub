@@ -50,8 +50,9 @@ describe('Clash 内置生成器', () => {
         expect(parsed.dns['respect-rules']).toBe(true);
         expect(parsed.dns.nameserver).toContain('udp://8.8.8.8:53#🌐 DNS 出口');
         expect(parsed.dns['nameserver-policy']['geosite:cn']).toEqual([
-            '223.5.5.5',
-            '119.29.29.29',
+            'https://223.5.5.5/dns-query',
+            'https://223.6.6.6/dns-query',
+            'https://120.53.53.53/dns-query',
         ]);
     });
     it('should render SS v2ray-plugin mux as a boolean for Clash compatibility', () => {

@@ -11,13 +11,30 @@ describe('shared split DNS policy', () => {
         const dns = resolveSafeDnsConfig('');
 
         expect(dns['respect-rules']).toBe(true);
-        expect(dns['nameserver-policy']['geosite:cn']).toEqual(['223.5.5.5', '119.29.29.29']);
+        expect(dns['nameserver-policy']['geosite:cn']).toEqual([
+            'https://223.5.5.5/dns-query',
+            'https://223.6.6.6/dns-query',
+            'https://120.53.53.53/dns-query',
+        ]);
+        expect(dns['nameserver-policy']['geosite:private']).toEqual(['223.5.5.5', '119.29.29.29']);
         expect(dns.nameserver).toEqual([
             `udp://8.8.8.8:53#${DNS_PROXY_GROUP}`,
             `udp://1.1.1.1:53#${DNS_PROXY_GROUP}`,
         ]);
         expect(dns.fallback).toEqual([]);
-        expect(dns['proxy-server-nameserver']).toEqual(['223.5.5.5', '119.29.29.29']);
+        expect(dns['proxy-server-nameserver']).toEqual([
+            '223.5.5.5',
+            '119.29.29.29',
+            'https://223.5.5.5/dns-query',
+            'https://223.6.6.6/dns-query',
+            'https://120.53.53.53/dns-query',
+        ]);
+        // 直连出站的解析路径必须加密：明文 UDP:53 会被部分网络丢弃，导致国内直连站点解析超时
+        expect(dns['direct-nameserver']).toEqual([
+            'https://223.5.5.5/dns-query',
+            'https://223.6.6.6/dns-query',
+            'https://120.53.53.53/dns-query',
+        ]);
     });
 
     it('uses encrypted foreign resolvers only in polluted mode', () => {

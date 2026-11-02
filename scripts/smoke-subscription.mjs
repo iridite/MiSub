@@ -74,7 +74,16 @@ export function validateSingboxConfig(config, mode) {
 
     const domestic = array(dns.servers).filter(server => String(server?.tag || '').startsWith('dns-cn-'));
     const foreign = array(dns.servers).filter(server => String(server?.tag || '').startsWith('dns-foreign-'));
-    assert(domestic.length > 0 && domestic.every(server => server.type === 'udp' && server.detour === 'DIRECT'), 'sing-box domestic DNS path is not direct plaintext');
+    // 国内解析必须直连且加密：明文 UDP:53 会被部分网络链路丢弃（国内域名解析超时），
+    // 而 sing-box 的 geosite-cn 只路由到 dns-cn-1，所以首位必须是加密 DoH。
+    assert(
+        domestic.length > 0 && domestic.every(server => server.detour === 'DIRECT'),
+        'sing-box domestic DNS path is not direct'
+    );
+    assert(
+        domestic.every(server => server.type === 'https'),
+        'sing-box domestic DNS is not encrypted'
+    );
     assertDnsMode(foreign.map(server => `${server.type}://${server.server}${server.detour === DNS_PROXY_GROUP ? `#${DNS_PROXY_GROUP}` : ''}`), mode, 'sing-box foreign DNS');
     assert(foreign.every(server => server.detour === DNS_PROXY_GROUP), 'sing-box foreign DNS is not proxied');
 

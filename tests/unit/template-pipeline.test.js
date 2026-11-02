@@ -43,7 +43,12 @@ MATCH,节点选择
 
         expect(parsed.dns.servers).toEqual(
             expect.arrayContaining([
-                expect.objectContaining({ type: 'udp', server: '223.5.5.5', server_port: 53 }),
+                expect.objectContaining({
+                    type: 'https',
+                    server: '223.5.5.5',
+                    server_port: 443,
+                    detour: 'DIRECT',
+                }),
             ])
         );
         expect(parsed.dns.rules).toEqual(
