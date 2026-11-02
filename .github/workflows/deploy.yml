@@ -11,12 +11,19 @@ on:
 permissions:
   contents: read
 
+# 同一分支只跑一个部署：连续推送时取消旧 run，避免旧提交的部署晚于新提交完成。
+# Pages 每次部署是原子替换，取消进行中的 run 随时安全（上一个成功部署保持在线）。
+concurrency:
+  group: pages-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 1
 
@@ -27,7 +34,7 @@ jobs:
           grep -q "DEFAULT_DNS_LISTEN" functions/modules/subscription/safe-dns.js
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -45,8 +52,9 @@ jobs:
           KV_NAMESPACE_ID: ${{ vars.MISUB_KV_ID }}
         run: |
           set -euo pipefail
-          test -n "$ACCOUNT_ID"
-          test -n "$KV_NAMESPACE_ID"
+          # 仓库变量缺失时直接说明缺哪个，而不是留一个裸 exit code 1
+          : "${ACCOUNT_ID:?missing repository variable CLOUDFLARE_ACCOUNT_ID (Settings → Secrets and variables → Actions → Variables)}"
+          : "${KV_NAMESPACE_ID:?missing repository variable MISUB_KV_ID (Settings → Secrets and variables → Actions → Variables)}"
           cat > wrangler.jsonc <<EOF
           {
             "name": "misub",
@@ -97,8 +105,8 @@ jobs:
         run: |
           set -euo pipefail
           if [[ -z "${CLOUDFLARE_API_TOKEN:-}" ]]; then
-            test -n "${CLOUDFLARE_API_KEY:-}"
-            test -n "${CLOUDFLARE_EMAIL:-}"
+            : "${CLOUDFLARE_API_KEY:?missing secret CLOUDFLARE_API_KEY (or set CLOUDFLARE_API_TOKEN instead)}"
+            : "${CLOUDFLARE_EMAIL:?missing secret CLOUDFLARE_EMAIL (required when using CLOUDFLARE_API_KEY)}"
           fi
           npx wrangler pages deploy dist --project-name misub --branch main --commit-dirty=true
 
@@ -110,5 +118,5 @@ jobs:
           if [[ -n "${MISUB_SMOKE_URL:-}" ]]; then
             node scripts/smoke-subscription.mjs
           else
-            echo "MISUB_SMOKE_URL not configured, skipping subscription smoke test."
+            echo "::warning title=Subscription smoke test skipped::MISUB_SMOKE_URL secret is not configured, so the deployed subscription was NOT verified. Add it with: gh secret set MISUB_SMOKE_URL --body '<subscription url>'"
           fi
