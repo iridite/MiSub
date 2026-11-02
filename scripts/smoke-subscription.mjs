@@ -16,12 +16,26 @@ function isLoopbackHost(value) {
     return host === 'localhost' || host === '::1' || host === '::' || host === '0.0.0.0' || host.startsWith('127.');
 }
 
+// MiSub 会往订阅里塞“流量剩余 / 到期时间”这类纯展示用的伪节点（server 固定 127.0.0.1，
+// 见 main-handler.js 的 enableTrafficNode）。它们不是可拨号的代理端点，校验时放行；
+// 其它回环 server 仍然是缺陷。
+// 节点名会带国旗前缀（如 "🇬🇧 流量剩余 ≫ 547.37 GB"），所以按包含匹配，不锚定开头。
+const INFO_PSEUDO_NODE_PATTERN = /(?:流量剩余|剩余流量|到期时间|套餐到期)\s*≫/;
+
 function assertNoLoopbackNodes(nodes, label) {
     for (const node of array(nodes)) {
-        if (node?.server && isLoopbackHost(node.server)) {
-            throw new Error(`${label} contains loopback proxy endpoint`);
-        }
+        if (!node?.server || !isLoopbackHost(node.server)) continue;
+        // Clash 用 name，sing-box 用 tag
+        if (INFO_PSEUDO_NODE_PATTERN.test(String(node.name || node.tag || ''))) continue;
+        throw new Error(`${label} contains loopback proxy endpoint`);
     }
+}
+
+// 内置生成器的 DNS 出口一律带 #<DNS 出口> 组后缀；实例用 customDnsOverride 覆盖 DNS 块时不会有这个签名，
+// 此时 ?dns-mode= 对输出不再生效（DNS 是显式指定的），只能校验与模式无关的必需项。
+function hasGeneratedDnsDialect(dns) {
+    const servers = array(dns?.nameserver).map(server => String(server));
+    return servers.length > 0 && servers.every(server => server.endsWith(`#${DNS_PROXY_GROUP}`));
 }
 
 function assertDnsMode(values, mode, label) {
@@ -46,9 +60,10 @@ export function validateClashConfig(config, mode) {
     const dns = config.dns || {};
     assert(dns['enhanced-mode'] === 'fake-ip', 'Clash fake-ip mode is missing');
     assert(dns['respect-rules'] === true, 'Clash DNS respect-rules is disabled');
-    assertDnsMode(dns.nameserver, mode, 'Clash DNS');
-    if (mode === 'clean') assert(array(dns.fallback).length === 0, 'Clash clean mode has fallback DNS');
+    assert(array(dns.nameserver).length > 0, 'Clash DNS has no nameservers');
     assert(array(dns['nameserver-policy']?.['geosite:cn']).length > 0, 'Clash geosite:cn DNS policy is missing');
+    if (hasGeneratedDnsDialect(dns)) assertDnsMode(dns.nameserver, mode, 'Clash DNS');
+    if (mode === 'clean') assert(array(dns.fallback).length === 0, 'Clash clean mode has fallback DNS');
 
     // 结构不变量：网段类规则集中排在最前，不夹在规则集之间；MATCH 永远在最后。
     const rules = array(config.rules).map(rule => String(rule));
@@ -66,7 +81,8 @@ export function validateClashConfig(config, mode) {
 
     assertNoLoopbackNodes(config.proxies, 'Clash');
     const aiGroups = array(config['proxy-groups']).filter(group => String(group?.name || '').startsWith('🤖'));
-    assert(aiGroups.length > 0, 'Clash AI groups are missing');
+    // 生成器默认注入 fail-closed 的 AI 服务组（存在性由 template-pipeline 单测覆盖）；
+    // 自定义模板可以不发布这些组，但一旦发布就绝不能含 DIRECT。
     assert(aiGroups.every(group => !array(group.proxies).includes('DIRECT')), 'Clash AI group allows DIRECT');
     return true;
 }
@@ -103,7 +119,6 @@ export function validateSingboxConfig(config, mode) {
 
     assertNoLoopbackNodes(array(config.outbounds).filter(outbound => outbound?.server), 'sing-box');
     const aiGroups = array(config.outbounds).filter(outbound => String(outbound?.tag || '').startsWith('🤖'));
-    assert(aiGroups.length > 0, 'sing-box AI groups are missing');
     assert(aiGroups.every(group => !array(group.outbounds).includes('DIRECT')), 'sing-box AI group allows DIRECT');
     return true;
 }
