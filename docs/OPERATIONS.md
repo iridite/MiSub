@@ -129,11 +129,11 @@
 
 ### 1.1 规则集收敛（2026-11-12）
 
-- 两套模板都不再有裸规则：直连/AI 例外只在 `public-src/rules/custom-direct.list`、`custom-ai.list` 维护，部署时拷到 `public/rules/`，新增域名只改这两个文件。
-- 顺序：`private` → `apple` → `wechat` → `custom-direct` → 广告 → `ai` → `custom-ai` → `cn-domain` → `foreign` → `telegram`（IP）→ `cn` IP → 兜底。`custom-direct` 必须排在广告前（AWA 与完整库都含 `gvideo.qpic.cn`）；IP 类规则必须排在域名集之后，否则每个未命中域名都会多一次 DNS 解析。
-- AI 用 MetaCubeX `category-ai-chat-!cn.mrs`（217 条）替换 11 条裸规则；`character.ai` 不在其中，放 `custom-ai.list`。
+- 两套模板都不再有裸规则：直连例外只在 `public-src/rules/custom-direct.list` 维护，部署时拷到 `public/rules/`，新增直连域名只改这一个文件。
+- 顺序：`private` → `apple` → `wechat` → `custom-direct` → 广告 → `ai` → `cn-domain` → `foreign` → `telegram`（IP）→ `cn` IP → 兜底。`custom-direct` 必须排在广告前（AWA 与完整库都含 `gvideo.qpic.cn`，217h 含 `oss.weread.qq.com`）；IP 类规则必须排在域名集之后，否则每个未命中域名都会多一次 DNS 解析。
+- AI 用 MetaCubeX `category-ai-chat-!cn.mrs`（217 条）替换 11 条裸规则；`character.ai` 不在其中，但用户不用，不单建集合（它走 `foreign` → 节点选择）。
 - 桌面广告库保持 217h 完整库：AWA 969 条里 97% 已被它覆盖，只有手机轻量库（覆盖 68%）叠加 AWA 才有 314 条增量。
-- 取舍：AWA 不收录字节/腾讯/微软遥测，所以 `oss.weread.qq.com` 这类被 217h 拦截的遥测域名在手机端仍由轻量库拦截，不是 AWA 的功劳。
+- 微信读书：`oss.weread.qq.com` 占本机被拦次数的 23%（217h 完整与轻量库均拦截），已放入 `custom-direct.list` 在广告前放行；字节/腾讯/微软其余遥测仍由 217h 拦截（AWA 不收录）。
 - 部署顺序：先追加新规则集并部署，再改线上模板，最后才删旧集；任何一步反过来都会让旧模板引用的规则集 404。
 - 备份：改前的两套模板全文在 `.files/services/misub-backups/`（不含订阅链接与节点）。
 
