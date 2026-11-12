@@ -131,7 +131,8 @@ async function fetchConfig(baseUrl, params) {
     for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
 
     let lastError;
-    for (let attempt = 0; attempt < 3; attempt += 1) {
+    // Cloudflare Pages 新部署生效后路由切换可能短暂返回 404，退避共约 15s 覆盖边缘传播窗口
+    for (let attempt = 0; attempt < 6; attempt += 1) {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 20_000);
         try {
@@ -141,7 +142,7 @@ async function fetchConfig(baseUrl, params) {
             return body;
         } catch (error) {
             lastError = error;
-            if (attempt < 2) await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)));
+            if (attempt < 5) await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
         } finally {
             clearTimeout(timeout);
         }
