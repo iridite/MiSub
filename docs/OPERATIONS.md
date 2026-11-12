@@ -130,8 +130,8 @@
 ### 1.1 规则集收敛（2026-11-12）
 
 - 两套模板都不再有裸规则：直连例外只在 `public-src/rules/custom-direct.list` 维护，部署时拷到 `public/rules/`，新增直连域名只改这一个文件。
-- 顺序：`private` → `apple` → `wechat` → `custom-direct` → 广告 → `ai` → `cn-domain` → `foreign` → `telegram`（IP）→ `cn` IP → 兜底。`custom-direct` 必须排在广告前（AWA 与完整库都含 `gvideo.qpic.cn`，217h 含 `oss.weread.qq.com`）；IP 类规则必须排在域名集之后，否则每个未命中域名都会多一次 DNS 解析。
-- AI 用 MetaCubeX `category-ai-chat-!cn.mrs`（217 条）替换 11 条裸规则；`character.ai` 不在其中，但用户不用，不单建集合（它走 `foreign` → 节点选择）。
+- 顺序：`private` → `apple` → `wechat` → `custom-direct` → 广告 → `cn-domain` → `foreign` → `telegram`（IP）→ `cn` IP → 兜底。`custom-direct` 必须排在广告前（AWA 与完整库都含 `gvideo.qpic.cn`，217h 含 `oss.weread.qq.com`）；IP 类规则必须排在域名集之后，否则每个未命中域名都会多一次 DNS 解析。
+- AI 策略组（`🤖 AI 服务` / `🤖 AI 自动`）与独立 `ai.mrs` 已于同日移除：AI 域名全部包含在 `foreign.mrs` 内，统一跟随 `🚀 节点选择`，避免 `🤖 AI 自动` 选中被 Google 判为 `"ZZ"` 的节点或与 `accounts.google.com` 跨区拆分。
 - 桌面广告库保持 217h 完整库：AWA 969 条里 97% 已被它覆盖，只有手机轻量库（覆盖 68%）叠加 AWA 才有 314 条增量。
 - 微信读书：`oss.weread.qq.com` 占本机被拦次数的 23%（217h 完整与轻量库均拦截），已放入 `custom-direct.list` 在广告前放行；字节/腾讯/微软其余遥测仍由 217h 拦截（AWA 不收录）。
 - 部署顺序：先追加新规则集并部署，再改线上模板，最后才删旧集；任何一步反过来都会让旧模板引用的规则集 404。
@@ -141,7 +141,7 @@
 
 - 问题：`enableTrafficNode` 开启时生成的 `流量剩余 ≫ … GB`、`到期时间 ≫ …`（`127.0.0.1:443` 伪 trojan）被 `url-to-clash.js` 误识别 `GB` 为英国贴上 `🇬🇧` / `🌍`，又被 `template-processor.js` 与 `builtin-rules-provider.js` 的 `.*` / `\bGB\b` 正则卷入 `♻️ 自动选择` 与 `🇬🇧 英国节点`；同时 `render-clash.js` 漏掉了对输出代理 `metadata` 内部字段的剥离。
 - 修复：导出 `isVirtualInfoProxy`，跳过对虚拟展示节点的地区识别和自动补国旗；自定义模板与内置策略组在正则展开、地区分组、AI/DNS 组及链式代理副本生成中一律排除 `isVirtualInfoProxy`；`render-clash.js` 对输出 `proxies` 统一剥离 `metadata`。
-- 线上设置：生产 KV/D1 的 `enableTrafficNode` 设为 `false`（客户端头部已从 `Subscription-Userinfo` 展示流量与到期时间）。
+- 线上设置：生产 KV/D1 的 `enableTrafficNode` 设为 `false`（客户端头部已从 `Subscription-Userinfo` 展示流量与到期时间）；`builtinEnableUdp` 设为 `true`（修复全节点 `udp: false` 导致浏览器 QUIC UDP:443 跳过规则走 `DIRECT` 的泄露通道）。
 
 ### 2. 豆包输入法与字节语音服务的国内分流（UDP / QUIC 嗅探）
 

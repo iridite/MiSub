@@ -92,9 +92,8 @@ jobs:
           fetch_rule cn-domain "$meta/geosite/cn.mrs"
           fetch_rule foreign "$meta/geosite/geolocation-!cn.mrs"
           fetch_rule geoip/cn "$meta/geoip/cn.mrs"
-          # 合并规则集：AWAvenue 取官方发布的 mrs（969 条，误杀最少）；AI 与 Telegram IP 取 MetaCubeX 聚合集
+          # 合并规则集：AWAvenue 取官方发布的 mrs（969 条，误杀最少）；Telegram IP 取 MetaCubeX 聚合集（AI 域名已在 foreign.mrs 内）
           fetch_rule awa https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/Filters/AWAvenue-Ads-Rule-Clash.mrs
-          fetch_rule ai "$meta/geosite/category-ai-chat-!cn.mrs"
           fetch_rule geoip/telegram "$meta/geoip/telegram.mrs"
           # 自维护直连清单（文本，classical）：上游没有、必须直连的域名，见 public-src/rules/custom-direct.list
           cp public-src/rules/custom-direct.list public/rules/custom-direct.list
