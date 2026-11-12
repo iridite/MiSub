@@ -1,0 +1,17 @@
+# 自维护直连清单：上游 MetaCubeX/AWAvenue 集合里查不到、却必须直连的域名。
+# 新增直连域名只改这一个文件，不要在规则模板里再放裸 DOMAIN-SUFFIX。
+# 顺序要求：本集合排在广告拦截集之前（AWAvenue 含 gvideo.qpic.cn、badjs.weixinbridge.com）。
+
+# 自建服务
+DOMAIN-SUFFIX,slarker.me
+DOMAIN-SUFFIX,nekorect.eu.org
+
+# 字节语音识别（豆包输入法）须走国内，详见 docs/OPERATIONS.md「豆包输入法与字节语音服务」
+DOMAIN-SUFFIX,snssdk.com
+
+# 微信：cn.mrs 未收录 wechatpay.cn / weixin.qq.com.cn；gvideo.qpic.cn、weixinbridge.com 会被广告库命中
+DOMAIN-SUFFIX,wechatpay.cn
+DOMAIN-SUFFIX,weixin.qq.com.cn
+DOMAIN-SUFFIX,weixinbridge.com
+DOMAIN-SUFFIX,qpic.cn
+DOMAIN-SUFFIX,dns.weixin.qq.com
