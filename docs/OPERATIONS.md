@@ -125,7 +125,17 @@
 | 客户端 | 规则库形态 | 典型特征与分流策略 |
 |---|---|---|
 | **桌面端**（ClashBar） | **重型 MRS 分流库** | 挂载完整 Meta Rule Set（`adblockmihomo_0.mrs` 广告拦截、`cn_1.mrs` geosite 域名、`cn_2.mrs` geoip IP 段）；规则细致、白名单全面，覆盖多套本地开发、局域网工具与办公软件 |
-| **移动端**（Clash Light） | **轻量 Lite 规则库** | 规则集极简，保持轻量模式；避免在 iOS 严格的 Network Extension 内存预算（15–30 MB）下因解析巨型规则集引发系统 OOM 闪退，保障后台低功耗常驻 |
+| **移动端**（Clash Light） | **轻量 Lite 规则库** | 规则集极简，保持轻量模式；避免在 iOS Network Extension 内存预算（上限 50 MB）下因解析巨型规则集引发系统 OOM 闪退，保障后台低功耗常驻。2026-11-12 起在轻量广告库之上叠加 AWAvenue（`awa.mrs`，969 条，实测桌面内核 +1.0 MB） |
+
+### 1.1 规则集收敛（2026-11-12）
+
+- 两套模板都不再有裸规则：直连/AI 例外只在 `public-src/rules/custom-direct.list`、`custom-ai.list` 维护，部署时拷到 `public/rules/`，新增域名只改这两个文件。
+- 顺序：`private` → `apple` → `wechat` → `custom-direct` → 广告 → `ai` → `custom-ai` → `cn-domain` → `foreign` → `telegram`（IP）→ `cn` IP → 兜底。`custom-direct` 必须排在广告前（AWA 与完整库都含 `gvideo.qpic.cn`）；IP 类规则必须排在域名集之后，否则每个未命中域名都会多一次 DNS 解析。
+- AI 用 MetaCubeX `category-ai-chat-!cn.mrs`（217 条）替换 11 条裸规则；`character.ai` 不在其中，放 `custom-ai.list`。
+- 桌面广告库保持 217h 完整库：AWA 969 条里 97% 已被它覆盖，只有手机轻量库（覆盖 68%）叠加 AWA 才有 314 条增量。
+- 取舍：AWA 不收录字节/腾讯/微软遥测，所以 `oss.weread.qq.com` 这类被 217h 拦截的遥测域名在手机端仍由轻量库拦截，不是 AWA 的功劳。
+- 部署顺序：先追加新规则集并部署，再改线上模板，最后才删旧集；任何一步反过来都会让旧模板引用的规则集 404。
+- 备份：改前的两套模板全文在 `.files/services/misub-backups/`（不含订阅链接与节点）。
 
 ### 2. 豆包输入法与字节语音服务的国内分流（UDP / QUIC 嗅探）
 
