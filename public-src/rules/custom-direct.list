@@ -15,3 +15,6 @@ DOMAIN-SUFFIX,weixin.qq.com.cn
 DOMAIN-SUFFIX,weixinbridge.com
 DOMAIN-SUFFIX,qpic.cn
 DOMAIN-SUFFIX,dns.weixin.qq.com
+
+# 微信读书对象存储：217h 与手机端轻量库都把它当追踪器拦截（占本机拦截量的 23%），用户要求放行
+DOMAIN-SUFFIX,oss.weread.qq.com
