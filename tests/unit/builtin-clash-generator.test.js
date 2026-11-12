@@ -196,4 +196,29 @@ describe('Clash 内置生成器', () => {
 
         expect(result.startsWith('#SUBSCRIBED')).toBe(false);
     });
+
+    it('内置策略组（自动/故障转移/地区/AI）应排除虚拟流量与到期展示节点', () => {
+        const result = generateBuiltinClashConfig(
+            [
+                'trojan://00000000-0000-0000-0000-000000000000@127.0.0.1:443#%E6%B5%81%E9%87%8F%E5%89%A9%E4%BD%99%20%E2%89%AB%20691.19%20GB',
+                'trojan://00000000-0000-0000-0000-000000000000@127.0.0.1:443#%E5%88%B0%E6%9C%9F%E6%97%B6%E9%97%B4%20%E2%89%AB%202026-11-20',
+                'trojan://real@example.com:443#London-01',
+            ].join('\n')
+        );
+        const parsed = yaml.load(result);
+        const autoGroup = parsed['proxy-groups'].find((g) => g.name === '♻️ 自动选择');
+        const ukGroup = parsed['proxy-groups'].find((g) => g.name === '🇬🇧 英国节点');
+        const ukAuto = parsed['proxy-groups'].find((g) => g.name === '⚡️ 🇬🇧 英国 - 自动测速');
+        const aiAuto = parsed['proxy-groups'].find((g) => g.name === '🤖 AI 自动');
+
+        expect(parsed.proxies.map((p) => p.name)).toEqual([
+            '流量剩余 ≫ 691.19 GB',
+            '到期时间 ≫ 2026-11-20',
+            '🇬🇧 London-01',
+        ]);
+        expect(autoGroup.proxies).toEqual(['🇬🇧 London-01']);
+        expect(ukGroup.proxies).toEqual(['⚡️ 🇬🇧 英国 - 自动测速', '🇬🇧 London-01']);
+        expect(ukAuto.proxies).toEqual(['🇬🇧 London-01']);
+        expect(aiAuto.proxies).toEqual(['🇬🇧 London-01']);
+    });
 });

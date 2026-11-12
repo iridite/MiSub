@@ -160,4 +160,20 @@ describe('node-utils', () => {
             mode: 'packet-up',
         });
     });
+
+    it('虚拟信息展示节点不应被 GB 单位误判为英国节点并添加国旗前缀', () => {
+        const proxies = urlsToClashProxies([
+            'trojan://00000000-0000-0000-0000-000000000000@127.0.0.1:443#%E6%B5%81%E9%87%8F%E5%89%A9%E4%BD%99%20%E2%89%AB%20691.19%20GB',
+            'trojan://00000000-0000-0000-0000-000000000000@127.0.0.1:443#%E5%88%B0%E6%9C%9F%E6%97%B6%E9%97%B4%20%E2%89%AB%202026-11-20',
+            'trojan://real@example.com:443#London-01',
+        ]);
+
+        expect(proxies.map((proxy) => proxy.name)).toEqual([
+            '流量剩余 ≫ 691.19 GB',
+            '到期时间 ≫ 2026-11-20',
+            '🇬🇧 London-01',
+        ]);
+        expect(proxies[0].metadata).toBeUndefined();
+        expect(proxies[1].metadata).toBeUndefined();
+    });
 });

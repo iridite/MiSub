@@ -7,7 +7,7 @@ import { isLocalProxyEndpoint } from './node-utils.js';
 
 const VIRTUAL_INFO_NODE_PASSWORD = '00000000-0000-0000-0000-000000000000';
 
-function isVirtualInfoProxy(proxy) {
+export function isVirtualInfoProxy(proxy) {
     if (!proxy || typeof proxy !== 'object') return false;
 
     const type = String(proxy.type || '').toLowerCase();
@@ -1593,17 +1593,21 @@ export function urlsToClashProxies(urls, options = {}) {
                 }
             }
 
-            // [智能增强] 注入元数据
-            proxy.metadata = extractNodeMetadata(proxy.name);
+            // 系统展示用虚拟节点（流量剩余/到期时间/已到期）不参与地区识别和自动补国旗，
+            // 避免把 "691.19 GB" 中的 "GB" 误判为英国节点而加上 🇬🇧。
+            if (!isVirtualInfoProxy(proxy)) {
+                // [智能增强] 注入元数据
+                proxy.metadata = extractNodeMetadata(proxy.name);
 
-            // [自动补全] 仅在名称中完全没有国旗/地球 Emoji 时才尝试补全，避免重复添加或干扰用户重命名
-            const HAS_EMOJI_REGEX = /([\u{1F1E6}-\u{1F1FF}]{2}|[\u{1F30D}-\u{1F30F}])/u;
-            if (
-                options.addFlagEmoji !== false &&
-                proxy.metadata.flag &&
-                !HAS_EMOJI_REGEX.test(proxy.name)
-            ) {
-                proxy.name = `${proxy.metadata.flag} ${proxy.name}`;
+                // [自动补全] 仅在名称中完全没有国旗/地球 Emoji 时才尝试补全，避免重复添加或干扰用户重命名
+                const HAS_EMOJI_REGEX = /([\u{1F1E6}-\u{1F1FF}]{2}|[\u{1F30D}-\u{1F30F}])/u;
+                if (
+                    options.addFlagEmoji !== false &&
+                    proxy.metadata.flag &&
+                    !HAS_EMOJI_REGEX.test(proxy.name)
+                ) {
+                    proxy.name = `${proxy.metadata.flag} ${proxy.name}`;
+                }
             }
 
             return proxy;

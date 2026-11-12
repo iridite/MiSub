@@ -1,13 +1,21 @@
 import { groupNodeLinesByRegion } from './region-groups.js';
 import { AI_SERVICE_RULES } from './builtin-rules-provider.js';
 import { DNS_PROXY_GROUP } from './safe-dns.js';
+import { isVirtualInfoProxy } from '../../utils/url-to-clash.js';
+
+function getRoutableProxyNames(proxies = []) {
+    return (Array.isArray(proxies) ? proxies : [])
+        .filter((proxy) => !isVirtualInfoProxy(proxy))
+        .map((proxy) => proxy.name || proxy.tag)
+        .filter(Boolean);
+}
 
 /**
  * 解析并扩展策略组中的正则过滤器
  * @param {Object} model - 统一模板模型
  */
 function resolveGroupFilters(model) {
-    const proxyNames = model.proxies.map((p) => p.name || p.tag).filter(Boolean);
+    const proxyNames = getRoutableProxyNames(model.proxies);
     if (proxyNames.length === 0) return;
 
     model.groups.forEach((group) => {
@@ -211,7 +219,7 @@ function pruneInvalidMembers(model) {
 
 function ensureDnsProxyGroup(model) {
     if (model.groups.some((group) => group.name === DNS_PROXY_GROUP)) return;
-    const proxyNames = model.proxies.map((proxy) => proxy.name || proxy.tag).filter(Boolean);
+    const proxyNames = getRoutableProxyNames(model.proxies);
     model.groups.push({
         name: DNS_PROXY_GROUP,
         type: 'url-test',
@@ -250,7 +258,7 @@ function ensureAiPolicy(model) {
     );
     const fallbackMembers = proxyOnlyMembers(mainGroup?.members);
     const preferredMembers = proxyOnlyMembers(aiGroups[0]?.members);
-    const nodeMembers = model.proxies.map((proxy) => proxy.name || proxy.tag).filter(Boolean);
+    const nodeMembers = getRoutableProxyNames(model.proxies);
     const aiMembers = Array.from(
         new Set([
             ...(preferredMembers.length > 0 ? preferredMembers : fallbackMembers),
@@ -359,8 +367,8 @@ export function applySmartModelOptimizations(model) {
 
     // 4. 检查等级。如果是 none (完全禁用)，我们只执行占位符展开和清理，不进行智能注入。
     if (!isCustomOrNone && normalizedLevel !== 'base') {
-        // 3. 准备获取所有节点的名称，用于后续注入
-        const proxyNames = model.proxies.map((p) => p.name || p.tag).filter(Boolean);
+        // 3. 准备获取所有可路由节点的名称，用于后续注入（排除虚拟展示节点）
+        const proxyNames = getRoutableProxyNames(model.proxies);
         if (proxyNames.length > 0) {
             // 4. 识别地区分组并注入
             const nodeEntries = proxyNames.map((name) => ({ tag: name }));

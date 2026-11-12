@@ -33,6 +33,12 @@ function filterAutoSelectMembers(group) {
     );
 }
 
+function stripInternalProxyFields(proxy) {
+    if (!proxy || typeof proxy !== 'object') return proxy;
+    const { metadata, ...publicProxy } = proxy;
+    return publicProxy;
+}
+
 const ACL4SSR_ROOT_PROVIDER_FILES = new Set([
     'apple',
     'banad',
@@ -249,7 +255,7 @@ export function renderClashFromTemplateModel(model) {
             mode: normalizedModel.settings?.dnsMode,
             proxyGroup: DNS_PROXY_GROUP,
         }),
-        proxies: normalizedModel.proxies,
+        proxies: normalizedModel.proxies.map(stripInternalProxyFields),
         'proxy-groups': normalizedModel.groups
             .filter(
                 (group) =>

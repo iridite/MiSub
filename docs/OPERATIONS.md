@@ -137,6 +137,12 @@
 - 部署顺序：先追加新规则集并部署，再改线上模板，最后才删旧集；任何一步反过来都会让旧模板引用的规则集 404。
 - 备份：改前的两套模板全文在 `.files/services/misub-backups/`（不含订阅链接与节点）。
 
+### 1.2 虚拟提示节点隔离与 `metadata` 剥离（2026-11-12）
+
+- 问题：`enableTrafficNode` 开启时生成的 `流量剩余 ≫ … GB`、`到期时间 ≫ …`（`127.0.0.1:443` 伪 trojan）被 `url-to-clash.js` 误识别 `GB` 为英国贴上 `🇬🇧` / `🌍`，又被 `template-processor.js` 与 `builtin-rules-provider.js` 的 `.*` / `\bGB\b` 正则卷入 `♻️ 自动选择` 与 `🇬🇧 英国节点`；同时 `render-clash.js` 漏掉了对输出代理 `metadata` 内部字段的剥离。
+- 修复：导出 `isVirtualInfoProxy`，跳过对虚拟展示节点的地区识别和自动补国旗；自定义模板与内置策略组在正则展开、地区分组、AI/DNS 组及链式代理副本生成中一律排除 `isVirtualInfoProxy`；`render-clash.js` 对输出 `proxies` 统一剥离 `metadata`。
+- 线上设置：生产 KV/D1 的 `enableTrafficNode` 设为 `false`（客户端头部已从 `Subscription-Userinfo` 展示流量与到期时间）。
+
 ### 2. 豆包输入法与字节语音服务的国内分流（UDP / QUIC 嗅探）
 
 - **问题**：桌面端使用豆包输入法语音转文字、或微信桌面端语音转文字时，经常出现持续“转圈”甚至超时失败。

@@ -1,5 +1,6 @@
 import { groupNodeLinesByRegion } from './region-groups.js';
 import { DNS_PROXY_GROUP, SINGBOX_CN_RULE_SET } from './safe-dns.js';
+import { isVirtualInfoProxy } from '../../utils/url-to-clash.js';
 
 /**
  * 策略组标准名称常量
@@ -123,9 +124,13 @@ function aiPolicyGroups(proxyNames, regionNames, { relay = false } = {}) {
  * @param {Object[]} proxies
  * @returns {Array} 地区分组数据
  */
+function getRoutableProxies(proxies = []) {
+    return (Array.isArray(proxies) ? proxies : []).filter((proxy) => !isVirtualInfoProxy(proxy));
+}
+
 function generateRegionData(proxies, options = {}) {
-    // [智能升级] 直接传递代理对象数组，region-groups 现在能识别 metadata
-    return groupNodeLinesByRegion(proxies, options);
+    // [智能升级] 直接传递可路由代理对象数组，排除虚拟展示节点
+    return groupNodeLinesByRegion(getRoutableProxies(proxies), options);
 }
 
 /**
@@ -224,7 +229,7 @@ function _generateRegionGroups(proxies, options = {}) {
 export const POLICY_GROUPS = {
     // 基础配置：精简版
     BASE: (proxies, options = {}) => {
-        const proxyNames = proxies.map((p) => p.tag || p.name);
+        const proxyNames = getRoutableProxies(proxies).map((p) => p.tag || p.name);
         return [
             dnsProxyGroup(proxyNames),
             {
@@ -240,7 +245,7 @@ export const POLICY_GROUPS = {
     },
     // 标准配置：全能型
     STD: (proxies, options = {}) => {
-        const proxyNames = proxies.map((p) => p.tag || p.name);
+        const proxyNames = getRoutableProxies(proxies).map((p) => p.tag || p.name);
         const { regionSelectGroups, regionSupportGroups, regionNames } = _generateRegionGroups(
             proxies,
             options
@@ -304,7 +309,7 @@ export const POLICY_GROUPS = {
     },
     // 完整配置：细化分类
     FULL: (proxies, options = {}) => {
-        const proxyNames = proxies.map((p) => p.tag || p.name);
+        const proxyNames = getRoutableProxies(proxies).map((p) => p.tag || p.name);
         const { regionSelectGroups, regionSupportGroups, regionNames } = _generateRegionGroups(
             proxies,
             options
@@ -379,7 +384,7 @@ export const POLICY_GROUPS = {
     },
     // 链式代理：中转优化
     RELAY: (proxies, options = {}) => {
-        const proxyNames = proxies.map((p) => p.tag || p.name);
+        const proxyNames = getRoutableProxies(proxies).map((p) => p.tag || p.name);
         const { regionSelectGroups, regionSupportGroups, regionNames } = _generateRegionGroups(
             proxies,
             options

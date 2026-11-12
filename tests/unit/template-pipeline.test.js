@@ -957,4 +957,32 @@ custom_proxy_group=🤖 AI 服务\`select\`[]🚀 节点选择\`[]DIRECT
         });
         expect(parsed.rules).toContain('RULE-SET,ai,🤖 AI 服务');
     });
+
+    it('excludes virtual info nodes from .* and UK regex groups and strips proxy metadata', () => {
+        const rendered = renderClashFromIniTemplate(
+            `
+[custom]
+ruleset=🐟 兜底,[]FINAL
+custom_proxy_group=🚀 节点选择\`select\`[]♻️ 自动选择\`[]🇬🇧 英国节点\`[]DIRECT
+custom_proxy_group=♻️ 自动选择\`url-test\`.*\`https://cp.cloudflare.com/generate_204\`300,,50
+custom_proxy_group=🇬🇧 英国节点\`url-test\`(英国|🇬🇧|\\bGB\\b|London)\`https://cp.cloudflare.com/generate_204\`300,,50
+`,
+            {
+                nodeList: [
+                    'trojan://00000000-0000-0000-0000-000000000000@127.0.0.1:443#%E6%B5%81%E9%87%8F%E5%89%A9%E4%BD%99%20%E2%89%AB%20691.19%20GB',
+                    'trojan://00000000-0000-0000-0000-000000000000@127.0.0.1:443#%E5%88%B0%E6%9C%9F%E6%97%B6%E9%97%B4%20%E2%89%AB%202026-11-20',
+                    'trojan://real@example.com:443#London-01',
+                ].join('\n'),
+                targetFormat: 'clash',
+            }
+        );
+
+        const parsed = yaml.load(rendered);
+        const autoGroup = parsed['proxy-groups'].find((group) => group.name === '♻️ 自动选择');
+        const ukGroup = parsed['proxy-groups'].find((group) => group.name === '🇬🇧 英国节点');
+
+        expect(autoGroup.proxies).toEqual(['🇬🇧 London-01']);
+        expect(ukGroup.proxies).toEqual(['🇬🇧 London-01']);
+        expect(rendered).not.toContain('metadata:');
+    });
 });

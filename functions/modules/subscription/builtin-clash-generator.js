@@ -4,7 +4,7 @@
  * 支持 dialer-proxy、reality-opts 等特殊参数
  */
 
-import { urlsToClashProxies } from '../../utils/url-to-clash.js';
+import { isVirtualInfoProxy, urlsToClashProxies } from '../../utils/url-to-clash.js';
 import { getUniqueName } from './name-utils.js';
 import { isMetaCore } from './user-agent-utils.js';
 import { DNS_PROXY_GROUP, resolveSafeDnsConfig } from './safe-dns.js';
@@ -96,7 +96,9 @@ function applyMihomoRelayDialerProxy(proxies, publicProxies, proxyGroups) {
         return { proxies: publicProxies, proxyGroups };
     }
 
-    const chainProxies = publicProxies.map((proxy) => ({
+    const chainProxies = publicProxies
+        .filter((proxy) => !isVirtualInfoProxy(proxy))
+        .map((proxy) => ({
         ...proxy,
         name: `🔗 链式代理 - ${proxy.name}`,
         'dialer-proxy': '入口节点',
