@@ -985,4 +985,26 @@ custom_proxy_group=🇬🇧 英国节点\`url-test\`(英国|🇬🇧|\\bGB\\b|Lo
         expect(ukGroup.proxies).toEqual(['🇬🇧 London-01']);
         expect(rendered).not.toContain('metadata:');
     });
+
+    it('renders IPv4-only with performance flags on and refreshes rule sets every 6h', () => {
+        const rendered = renderClashFromIniTemplate(
+            `
+[custom]
+ruleset=🐟 兜底,[]FINAL
+custom_proxy_group=🚀 节点选择\`select\`[]DIRECT
+`,
+            {
+                nodeList: 'trojan://real@example.com:443#London-01',
+                targetFormat: 'clash',
+            }
+        );
+
+        const parsed = yaml.load(rendered);
+        expect(parsed.ipv6).toBe(false);
+        expect(parsed['tcp-concurrent']).toBe(true);
+        expect(parsed['unified-delay']).toBe(true);
+        expect(parsed.dns.ipv6).toBe(false);
+        expect(parsed.dns['fake-ip-range6']).toBeUndefined();
+        expect(parsed.dns['fake-ip-filter']).toContain('stun.*.*');
+    });
 });

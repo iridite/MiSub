@@ -10,6 +10,9 @@ export const SINGBOX_CN_RULE_SET = 'geosite-cn';
 // 客户端把系统 DNS 指向这个地址，查询才会进内核，从而拿到 fake-ip 并命中域名规则。
 // 只绑回环：allow-lan 为 false，不需要也不应该对局域网暴露。
 export const DEFAULT_DNS_LISTEN = '127.0.0.1:53';
+// 启用 IPv6 时的 fake-ip v6 段：必须用公网段，默认的 ULA（fc00::/7）会被 Chromium 的
+// Local Network Access 判定为内网，导致第三方脚本（Cloudflare Turnstile 等）静默失败。
+export const IPV6_FAKE_RANGE6 = '2001:2::/48';
 
 export const DEFAULT_DNS_POLICY = Object.freeze({
     // 明文 UDP 只用于 bootstrap（default-nameserver）和局域网私有域。
@@ -185,6 +188,20 @@ export const DEFAULT_DNS_CONFIG = {
         '*.local',
         'localhost',
         '*.arpa',
+        // STUN 必须拿真实 IP：走 fake-ip 会让 WebRTC/语音视频的 NAT 打洞拿不到映射（微信、Teams 通话卡住）。
+        'stun.*.*',
+        'stun.*.*.*',
+        '+.stun.*',
+        // 系统网络探测与时间同步：fake-ip 会让「已连接但无互联网」的判定失效、NTP 走代理。
+        '*.msftconnecttest.com',
+        '*.msftncsi.com',
+        'xbox.*.microsoft.com',
+        '+.xboxlive.com',
+        'time.*.com',
+        'time.*.gov',
+        'time.windows.com',
+        'ntp.*.com',
+        '+.push.apple.com',
     ],
     'use-hosts': true,
     'use-system-hosts': true,
@@ -284,10 +301,29 @@ export function resolveSafeDnsConfig(raw, options = {}) {
     });
 
     dns.enable = true;
-    dns.ipv6 = false;
+    // 默认纯 IPv4：机场节点绝大多数没有 IPv6 出口（实测 4 个节点里 3 个连不上 v6 目标），
+    // 开启后 AAAA 会返回真实 v6 地址，应用却连不上。要开就显式在 customDnsOverride 里写 ipv6: true。
+    const ipv6Enabled = resolveIpv6Flag(raw);
+    dns.ipv6 = ipv6Enabled;
+    if (ipv6Enabled) {
+        dns['fake-ip-range6'] = IPV6_FAKE_RANGE6;
+    } else {
+        delete dns['fake-ip-range6'];
+    }
     dns['enhanced-mode'] = 'fake-ip';
     dns['respect-rules'] = true;
     return dns;
+}
+
+/**
+ * 读取 IPv6 开关。默认关闭；显式写 `ipv6: true`（可放在 dns 块内或顶层）才启用。
+ */
+export function resolveIpv6Flag(raw) {
+    const parsed = parseOverride(raw);
+    const direct = parsed?.ipv6;
+    const nested = isObject(parsed?.dns) ? parsed.dns.ipv6 : undefined;
+    const value = direct ?? nested;
+    return value === true || String(value).toLowerCase() === 'true';
 }
 
 function parseSingboxResolver(value, tag, detour) {

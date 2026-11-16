@@ -1,7 +1,7 @@
 import yaml from 'js-yaml';
 import { clashFix } from '../../../utils/format-utils.js';
 import { normalizeUnifiedTemplateModel } from '../template-model.js';
-import { DNS_PROXY_GROUP, resolveSafeDnsConfig } from '../safe-dns.js';
+import { DNS_PROXY_GROUP, resolveIpv6Flag, resolveSafeDnsConfig } from '../safe-dns.js';
 import { applyClashHardening } from '../clash-hardening.js';
 import { applyMihomoChainProxy } from '../mihomo-chain-proxy.js';
 import { MISUB_MRS_BASE } from '../builtin-rules-provider.js';
@@ -237,23 +237,31 @@ export function renderClashFromTemplateModel(model) {
             url: providerUrl,
             path: `./ruleset/${providerName}.${usesTextList ? 'list' : usesMrs ? 'mrs' : 'yaml'}`,
             ...(providerUrl.startsWith(`${MISUB_MRS_BASE}/`) ? { proxy: 'DIRECT' } : {}),
-            interval: 86400,
+            // 6 小时刷新：上游规则集按天以上更新，一天一次会让新增的国内域名/广告域名滞后。
+            interval: 21600,
             ...(usesTextList ? { format: 'text' } : {}),
             ...(usesMrs ? { format: 'mrs' } : {}),
         };
     });
 
+    const customDnsOverride = normalizedModel.settings?.customDnsOverride;
+    const ipv6Enabled = resolveIpv6Flag(customDnsOverride);
     const config = {
         'mixed-port': 7890,
         'allow-lan': false,
         'bind-address': '127.0.0.1',
-        ipv6: false,
+        ipv6: ipv6Enabled,
+        // 同域名多 IP（IPv4/IPv6 双栈、CDN 多 A 记录）并行拨号，避免串行超时叠加。
+        'tcp-concurrent': true,
+        // url-test 延迟只算握手与首字节，不把 TLS/握手差异算进排名，节点排序才是可比的。
+        'unified-delay': true,
         mode: 'rule',
         'log-level': 'info',
         'external-controller': '127.0.0.1:9090',
-        dns: resolveSafeDnsConfig(normalizedModel.settings?.customDnsOverride, {
+        dns: resolveSafeDnsConfig(customDnsOverride, {
             mode: normalizedModel.settings?.dnsMode,
             proxyGroup: DNS_PROXY_GROUP,
+            ipv6: ipv6Enabled,
         }),
         proxies: normalizedModel.proxies.map(stripInternalProxyFields),
         'proxy-groups': normalizedModel.groups

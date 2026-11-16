@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
     DNS_PROXY_GROUP,
+    IPV6_FAKE_RANGE6,
     buildSingboxDnsConfig,
     resolveDnsPolicy,
+    resolveIpv6Flag,
     resolveSafeDnsConfig,
 } from '../../functions/modules/subscription/safe-dns.js';
 
@@ -74,5 +76,41 @@ describe('shared split DNS policy', () => {
         expect(policy.domestic).toEqual(['223.5.5.5', '119.29.29.29']);
         expect(policy.foreign).toEqual(['udp://8.8.8.8:53', 'udp://1.1.1.1:53']);
         expect(policy.polluted).toEqual(['https://8.8.8.8/dns-query']);
+    });
+
+    it('keeps IPv4-only by default and never emits a routable IPv6 fake range', () => {
+        const dns = resolveSafeDnsConfig('');
+
+        expect(dns.ipv6).toBe(false);
+        expect(dns['fake-ip-range6']).toBeUndefined();
+        expect(resolveIpv6Flag('')).toBe(false);
+        expect(resolveIpv6Flag('mode: clean')).toBe(false);
+    });
+
+    it('enables IPv6 fake range only when explicitly requested', () => {
+        expect(resolveIpv6Flag('ipv6: true')).toBe(true);
+        expect(resolveIpv6Flag('dns:\n  ipv6: true')).toBe(true);
+
+        const dns = resolveSafeDnsConfig('ipv6: true');
+        expect(dns.ipv6).toBe(true);
+        // 必须是公网段：ULA 段会被 Chromium Local Network Access 拦掉
+        expect(dns['fake-ip-range6']).toBe(IPV6_FAKE_RANGE6);
+        expect(dns['fake-ip-range6'].startsWith('2001:2::/')).toBe(true);
+    });
+
+    it('excludes STUN, OS connectivity probes and NTP from fake-ip', () => {
+        const filter = resolveSafeDnsConfig('')['fake-ip-filter'];
+
+        for (const entry of [
+            'stun.*.*',
+            '+.stun.*',
+            '*.msftconnecttest.com',
+            '*.msftncsi.com',
+            'time.windows.com',
+            'ntp.*.com',
+            '+.push.apple.com',
+        ]) {
+            expect(filter).toContain(entry);
+        }
     });
 });
