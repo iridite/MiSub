@@ -986,6 +986,31 @@ custom_proxy_group=🇬🇧 英国节点\`url-test\`(英国|🇬🇧|\\bGB\\b|Lo
         expect(rendered).not.toContain('metadata:');
     });
 
+    it('keeps negative-lookahead group filters verbatim so region groups are not pruned', () => {
+        const rendered = renderClashFromIniTemplate(
+            `
+[custom]
+ruleset=🐟 兜底,[]FINAL
+custom_proxy_group=🚀 节点选择\`select\`[]♻️ 自动选择\`[]🇭🇰 香港节点\`[]DIRECT
+custom_proxy_group=♻️ 自动选择\`url-test\`^(?!.*(下载专用|免费)).*$\`https://cp.cloudflare.com/generate_204\`300,,50
+custom_proxy_group=🇭🇰 香港节点\`url-test\`^(?!.*(下载专用|免费)).*(香港|Hong ?Kong)\`https://cp.cloudflare.com/generate_204\`300,,50
+`,
+            {
+                nodeList: [
+                    'trojan://a@1.1.1.1:443#%F0%9F%87%AD%F0%9F%87%B0%20%E9%A6%99%E6%B8%AFS01',
+                    'trojan://b@1.1.1.2:443#%F0%9F%87%AD%F0%9F%87%B0%20%E9%A6%99%E6%B8%AF%E4%B8%8B%E8%BD%BD%E4%B8%93%E7%94%A8',
+                ].join('\n'),
+                targetFormat: 'clash',
+            }
+        );
+
+        const parsed = yaml.load(rendered);
+        const hk = parsed['proxy-groups'].find((g) => g.name === '🇭🇰 香港节点');
+        expect(hk).toBeTruthy();
+        expect(hk.proxies).toHaveLength(1);
+        expect(hk.proxies[0]).toContain('香港S01');
+    });
+
     it('renders IPv4-only with performance flags on and refreshes rule sets every 6h', () => {
         const rendered = renderClashFromIniTemplate(
             `

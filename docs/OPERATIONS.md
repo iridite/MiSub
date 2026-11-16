@@ -157,6 +157,16 @@
 - 回滚：`POST /api/rule_templates` 写回 `misub-backups/` 里的改前模板即可；`deploy.yml` 的 bundle 未删，内置档位与单测仍依赖 `rules/ads.mrs`。
 - 未验证：jsDelivr 在移动网络上的真实可用性没有手机样本；若某些客户端仍拉不动，下一步才考虑国内对象存储默认域名（COS/OSS 的 `*.myqcloud.com`、`*.aliyuncs.com`，无需备案）。
 
+### 1.4 IPv6 与内核参数审计（2026-11-16）
+
+- 结论：**明确只做 IPv4**。理由不是配置麻烦，而是机场节点没有可用的 IPv6 出口——实测 4 个节点里 3 个连不上 `api6.ipify.org`，只有 `🇭🇰 香港S01` 有真实 v6 出网（`2602:f803:2:1:7:146:70:0`）。开启后 AAAA 会返回真实 v6，应用连不上再回退 IPv4，等于给每次访问加几百毫秒。
+- 现状行为（已实测）：`AAAA` 查询返回空，`A` 查询正常返回 fake-ip，STUN 等例外拿到真实 IP。不存在真实 v6 出站，也就没有 v6 绕过 TUN 的泄漏路径。
+- 开关：`customDnsOverride` 里写 `ipv6: true`（顶层或 `dns:` 内）才会启用，此时自动补 `fake-ip-range6: 2001:2::/48`。必须用公网段，mihomo 默认的 `fdfe:dcba:9876::/64` 落在 ULA，会被 Chromium Local Network Access 判为内网，导致 Turnstile 等第三方脚本静默失败（MetaCubeX/mihomo#3064）。
+- `fake-ip-filter` 例外清单已补 STUN（`stun.*.*`、`+.stun.*`）、系统探测（`*.msftconnecttest.com`、`*.msftncsi.com`、`xbox.*`）、时间同步（`time.*`、`ntp.*`、`time.windows.com`）与 `+.push.apple.com`。**站点存了完整的 `customDnsOverride`，代码里的默认值不会生效**，必须同时改这份 override。
+- 内核参数：`tcp-concurrent: true`（多 IP 并行拨号）、`unified-delay: true`（测速只算握手与首字节）、规则集 `interval` 由 86400 降到 21600。
+- 客户端侧无法从订阅控制的两项：`tun.strict-route` 与 `tun.mtu`，ClashBar 只暴露 stack/ipv6/tcp-concurrent；`global-client-fingerprint` 已在 mihomo 1.19.33 移除（启动时报 `The global-client-fingerprint configuration is removed`），指纹只能逐节点设，现网 28 个 reality 节点已全部带 `client-fingerprint`。
+- 自动组剔除：`♻️ 自动选择` 与所有地区组都加了负向前瞻，排除 `下载专用|免费|流量|到期|官网|剩余|套餐|通知|公告` 节点（现网 74 个节点里 9 个属此类，全部不再进任何策略组）。**注意 INI 解析器把以 `(` 开头且以 `)` 结尾的过滤器当作 ACL4SSR 形式并剥掉最外层括号**，所以过滤器必须写成 `^(?!.*(...)).*(原正则)`，不能写成 `(?!.*(...))(原正则)`，否则正则被截断、整组被剪空。
+
 ### 2. 豆包输入法与字节语音服务的国内分流（UDP / QUIC 嗅探）
 
 - **问题**：桌面端使用豆包输入法语音转文字、或微信桌面端语音转文字时，经常出现持续“转圈”甚至超时失败。
