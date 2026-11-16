@@ -143,6 +143,16 @@
 - 修复：导出 `isVirtualInfoProxy`，跳过对虚拟展示节点的地区识别和自动补国旗；自定义模板与内置策略组在正则展开、地区分组、AI/DNS 组及链式代理副本生成中一律排除 `isVirtualInfoProxy`；`render-clash.js` 对输出 `proxies` 统一剥离 `metadata`。
 - 线上设置：生产 KV/D1 的 `enableTrafficNode` 设为 `false`（客户端头部已从 `Subscription-Userinfo` 展示流量与到期时间）；`builtinEnableUdp` 设为 `true`（修复全节点 `udp: false` 导致浏览器 QUIC UDP:443 跳过规则走 `DIRECT` 的泄露通道）。
 
+### 1.3 规则集改由 jsDelivr 分发（2026-11-16）
+
+- 背景：十几个客户端在移动/联通 5G 上偶发拉不到订阅。MiSub 全部挂在 Cloudflare Pages，手机每次刷新要向 CF 打 10 个请求约 0.9 MB（桌面端多一个 2.3 MB 的 `ads.mrs`），5G 直连 CF 海外边缘不稳定。
+- 处理：两套模板的 9~10 条 `ruleset=` 全部改指 `https://cdn.jsdelivr.net/gh/...`，直接取上游公开仓库（MetaCubeX `@meta`、`Lanlan13-14/Rules`、`217heidai/adblockfilters`、`TG-Twilight/AWAvenue-Ads-Rule`、本仓库 `public-src/rules/custom-direct.list`）。CF 只剩 1 个约 32 KB 的订阅 YAML 请求。
+- 为什么不动服务器：解析结果 `sub.nekorect.eu.org` 等泛解析都指向 CF；ks（腾讯云上海 `124.220.28.165`）**不属于本项目**，禁止改动。自建反代因此放弃。
+- 为什么订阅 YAML 不能一起镜像：YAML 含节点地址与密码，放公开仓库等于把机场流量公开；公开镜像只适合放无凭据的规则集。
+- 校验：11 个文件在 jsDelivr 上均返回 200 且字节数与自建 bundle 完全一致（`cn` 532,882 / `geolocation-!cn` 199,218 / `adblockmihomolite` 77,476 / `adblockmihomo` 2,301,562 / AWA 8,437 / `WeChat` 361 / `custom-direct.list` 962）；两份订阅 `mihomo -t` 通过，`behavior`/`format` 正确（`geoip/*` → `ipcidr`，`.mrs` → `mrs`，`.list` → `classical/text`）。
+- 回滚：`POST /api/rule_templates` 写回 `misub-backups/` 里的改前模板即可；`deploy.yml` 的 bundle 未删，内置档位与单测仍依赖 `rules/ads.mrs`。
+- 未验证：jsDelivr 在移动网络上的真实可用性没有手机样本；若某些客户端仍拉不动，下一步才考虑国内对象存储默认域名（COS/OSS 的 `*.myqcloud.com`、`*.aliyuncs.com`，无需备案）。
+
 ### 2. 豆包输入法与字节语音服务的国内分流（UDP / QUIC 嗅探）
 
 - **问题**：桌面端使用豆包输入法语音转文字、或微信桌面端语音转文字时，经常出现持续“转圈”甚至超时失败。
