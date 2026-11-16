@@ -130,8 +130,12 @@
 ### 1.1 规则集收敛（2026-11-12）
 
 - 两套模板都不再有裸规则：直连例外只在 `public-src/rules/custom-direct.list` 维护，部署时拷到 `public/rules/`，新增直连域名只改这一个文件。
-- 顺序：`private` → `apple` → `wechat` → `custom-direct` → 广告 → `cn-domain` → `foreign` → `telegram`（IP）→ `cn` IP → 兜底。`custom-direct` 必须排在广告前（AWA 与完整库都含 `gvideo.qpic.cn`，217h 含 `oss.weread.qq.com`）；IP 类规则必须排在域名集之后，否则每个未命中域名都会多一次 DNS 解析。
-- AI 策略组（`🤖 AI 服务` / `🤖 AI 自动`）与独立 `ai.mrs` 已于同日移除：AI 域名全部包含在 `foreign.mrs` 内，统一跟随 `🚀 节点选择`，避免 `🤖 AI 自动` 选中被 Google 判为 `"ZZ"` 的节点或与 `accounts.google.com` 跨区拆分。
+- 顺序（2026-11-16 收敛后）：`private` → `apple` → `custom-direct` → 广告 → `cn`（域名）→ `cn`（IP）→ 兜底。`custom-direct` 必须排在广告前（AWA 与完整库都含 `gvideo.qpic.cn`，217h 含 `oss.weread.qq.com`）；IP 类规则必须排在域名集之后，否则每个未命中域名都会多一次 DNS 解析。
+- 同日删掉三个冗余集合，桌面 9 → **6**、手机 10 → **7** 个 provider：
+  - `wechat.mrs`：30 条里 28 条已在 `cn.mrs`，剩余 `qpic.cn` / `qlogo.cn` 并入 `custom-direct.list`。
+  - `geolocation-!cn.mrs`：它把海外域名送到 `🚀 节点选择`，而 `FINAL → 🐟 兜底 → 🚀 节点选择` 终点相同，删除只影响日志标签，省 199 KB。
+  - `geoip/telegram.mrs`：纯 IP 的 Telegram 连接删除后同样由 `FINAL` 落到同一出口。
+- AI 策略组（`🤖 AI 服务` / `🤖 AI 自动`）与独立 `ai.mrs` 已于同日移除：AI 域名随 `cn` 未命中的流量统一走兜底 → `🚀 节点选择`，避免 `🤖 AI 自动` 选中被 Google 判为 `"ZZ"` 的节点或与 `accounts.google.com` 跨区拆分。
 - 桌面广告库保持 217h 完整库：AWA 969 条里 97% 已被它覆盖，只有手机轻量库（覆盖 68%）叠加 AWA 才有 314 条增量。
 - 微信读书：`oss.weread.qq.com` 占本机被拦次数的 23%（217h 完整与轻量库均拦截），已放入 `custom-direct.list` 在广告前放行；字节/腾讯/微软其余遥测仍由 217h 拦截（AWA 不收录）。
 - 部署顺序：先追加新规则集并部署，再改线上模板，最后才删旧集；任何一步反过来都会让旧模板引用的规则集 404。
