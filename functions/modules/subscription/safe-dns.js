@@ -245,6 +245,11 @@ export function resolveSafeDnsConfig(raw, options = {}) {
         const explicit = clone(rawOverride);
         // 用户显式 DNS 块原样保留，只补上缺失的监听地址；写 listen: '' 可以主动关掉。
         if (explicit.listen === undefined) explicit.listen = DEFAULT_DNS_LISTEN;
+        // 显式块同样要满足 fake-ip v6 段的不变量：默认的 fc00::/7 会被 Chromium 的
+        // Local Network Access 判为内网，导致第三方脚本静默失败。
+        if (explicit.ipv6 === true && explicit['fake-ip-range6'] === undefined) {
+            explicit['fake-ip-range6'] = IPV6_FAKE_RANGE6;
+        }
         return explicit;
     }
 
