@@ -13,8 +13,11 @@ DOMAIN-SUFFIX,snssdk.com
 DOMAIN-SUFFIX,wechatpay.cn
 DOMAIN-SUFFIX,weixin.qq.com.cn
 DOMAIN-SUFFIX,weixinbridge.com
-DOMAIN-SUFFIX,qpic.cn
 DOMAIN-SUFFIX,dns.weixin.qq.com
 
 # 微信读书对象存储：217h 与手机端轻量库都把它当追踪器拦截（占本机拦截量的 23%），用户要求放行
 DOMAIN-SUFFIX,oss.weread.qq.com
+
+# 微信头像/图片：原 wechat.mrs 中未被 cn.mrs 覆盖的两条（该集合已合并进本文件，模板不再单列）
+DOMAIN-SUFFIX,qlogo.cn
+DOMAIN-SUFFIX,qpic.cn
