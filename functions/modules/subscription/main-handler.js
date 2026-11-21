@@ -64,6 +64,42 @@ function getProfileDownloadCountKey(profile) {
     return `${PROFILE_DOWNLOAD_COUNT_PREFIX}${profile.customId || profile.id}`;
 }
 
+const MIN_VALID_TIMESTAMP_SECONDS = 946684800; // 2000-01-01 00:00:00 UTC
+
+/**
+ * 判定子订阅是否已明确过期
+ * @param {Object} sub - 订阅对象
+ * @param {number} [nowSeconds] - 当前时间戳（秒）
+ * @returns {boolean}
+ */
+export function isSubscriptionExpired(sub, nowSeconds = Math.floor(Date.now() / 1000)) {
+    if (!sub || typeof sub !== 'object') return false;
+    if (sub.expiresAt) {
+        const rawTs =
+            typeof sub.expiresAt === 'number'
+                ? sub.expiresAt
+                : new Date(sub.expiresAt).getTime();
+        const expTime = rawTs > 1e11 ? Math.floor(rawTs / 1000) : rawTs;
+        if (
+            Number.isFinite(expTime) &&
+            expTime >= MIN_VALID_TIMESTAMP_SECONDS &&
+            expTime < nowSeconds
+        ) {
+            return true;
+        }
+    }
+    const rawExpire = Number(sub.userInfo?.expire || 0);
+    const expire = rawExpire > 1e11 ? Math.floor(rawExpire / 1000) : rawExpire;
+    if (
+        Number.isFinite(expire) &&
+        expire >= MIN_VALID_TIMESTAMP_SECONDS &&
+        expire < nowSeconds
+    ) {
+        return true;
+    }
+    return false;
+}
+
 function buildTemplateProxyBlock(nodeList) {
     return nodeList
         .split('\n')
@@ -677,15 +713,23 @@ export async function handleMisubRequest(context) {
                         const id = isObject ? item.id : item;
 
                         const baseSub = misubMap.get(id);
+                        const isExpired =
+                            config.autoFilterExpiredSubscriptions !== false &&
+                            isSubscriptionExpired(baseSub);
                         if (
                             baseSub &&
                             baseSub.enabled &&
+                            !isExpired &&
                             typeof baseSub.url === 'string' &&
                             baseSub.url.startsWith('http')
                         ) {
                             // 如果是对象，则合并覆盖配置（Profile 级别的设置优先级更高）
                             const sub = isObject ? { ...baseSub, ...item } : baseSub;
                             targetMisubs.push(sub);
+                        } else if (baseSub && isExpired) {
+                            console.log(
+                                `[MiSub Expiration Shield] Skipped expired subscription: ${baseSub.name || id} (expired at ${baseSub.userInfo?.expire})`
+                            );
                         }
                     });
                 }
@@ -741,7 +785,10 @@ export async function handleMisubRequest(context) {
                 new Response('Not Found', { status: 404 })
             );
         }
-        targetMisubs = allMisubs.filter((s) => s.enabled);
+        const shouldFilterExpired = config.autoFilterExpiredSubscriptions !== false;
+        targetMisubs = allMisubs.filter(
+            (s) => s.enabled && (!shouldFilterExpired || !isSubscriptionExpired(s))
+        );
     }
 
     // 使用统一的确定目标格式的方法（此方法中包含了处理各类客户端如 Surge 等对应版本的最新支持规则）

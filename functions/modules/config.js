@@ -36,6 +36,7 @@ export const DEFAULT_SETTINGS = {
     storageType: 'kv',
     // 新增：借鉴Sub-Store和miaomiaowu的功能
     enableSubscriptionSync: true, // 启用订阅同步
+    autoFilterExpiredSubscriptions: true, // 自动静默过滤已到期子订阅（防止僵尸节点拖慢客户端）
     subscriptionCacheExpireMinutes: 60, // 订阅缓存过期时间（分钟）
     enableTrafficMonitor: true, // 启用流量监控
     enableTemplateEngine: true, // 启用模板引擎
