@@ -36,6 +36,7 @@ It is designed for personal and small-team usage: simple operations, clear clien
 ## Features
 
 - **Profiles**: combine upstream subscriptions and manual nodes into scenario-specific subscription profiles.
+- **Expiration Shield**: automatically detect expired upstream subscriptions via `subscription-userinfo` headers and silently filter them out during profile aggregation, preventing client-side health-check storms and timeout stalls without losing configured records.
 - **Subscription and node management**: manage airport subscriptions, manual nodes, groups, ordering, remarks, traffic, and expiry data.
 - **Operator Chain**: process nodes with filter, regex rename, script/DSL execution, sorting, and smart deduplication steps.
 - **Multi-client output**: generate subscription output for Clash/Mihomo, Sing-Box, Surge, Loon, Quantumult X, Shadowrocket, V2rayN/V2rayNG, and base64 clients.
